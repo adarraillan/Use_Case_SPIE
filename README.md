@@ -28,4 +28,4 @@
 </ul>
 
 ##Format données
-house(0 appart, 1 maison), nb_inhabitant, superficy, date, day, hour(0:00 = 1, 0:30 = 2), weather(null?) -> conso
+type(0 appart, 1 maison), nb_inhabitant, superficy, date, day, hour(0:00 = 1, 0:30 = 2), weather(null?) -> conso
