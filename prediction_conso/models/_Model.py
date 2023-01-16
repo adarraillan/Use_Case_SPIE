@@ -14,7 +14,7 @@ import datetime
 from codecarbon import EmissionsTracker
 import csv
 import numpy as np
-from dataset import DataLoader as dl
+from dataset.DataLoader import DataLoader as dl
 # %matplotlib inline
 
 
@@ -135,7 +135,7 @@ class Model:
         print(f"Emissions: {self._emission} kgCO2e")
 
         #see model in tensorboard
-        !tensorboard --logdir ./logs/fit
+        #!tensorboard --logdir ./logs/fit
 
 
     """
@@ -161,31 +161,31 @@ class Model:
         Function variables:
             test_dataset_path : str
     """
-    def evaluate(self, test_dataset_path="./prediction_conso/dataset/data_preprocess/test.csv"):
-        self.clean_result()
-        df = pd.read_csv(test_dataset_path)
-        predictions = []
-        #TODO:
-        #recuperer test dataset avec dataloader
-        #pour chaque élément du dataset faire les 2 lignes suivantes:
-        output = self.predict(ligne)
-        predictions.append(_id,type_logement,date,hour,output,ground_truth)
-        pd.DataFrame(predictions).to_csv('./prediction_conso/results/prediction.csv', index=False)
-        self._eval_infos=[]
-        for step in predictions:
-            if step|1] is not in self._eval_infos:
-                self._eval_info[step[1]]=(0,0)
-            self._eval_infos[step[1]] += (np.abs(step[4]-step[5]),1)
-        for a in range(len(self._eval_infos)):
-            self._eval_infos[a][0] = self._eval_infos[a][0]/self._eval_infos[a][1]
-        #self._eval_infos type logement accuracy
-        with open("./prediction_conso/results/result_evaluations.csv", 'a') as f:
-            writer = csv.writer(f)
-            writer.writerow(["Date", time.time])
-            writer.writerow(["Emissions du training en kCO2e", self._emission])
-            writer.writerow(["Type de logement", "Accuracy"])
-            for e,v in self._eval_infos:
-                writer.writerow([e, v])
+    #def evaluate(self, test_dataset_path="./prediction_conso/dataset/data_preprocess/test.csv"):
+    #    self.clean_result()
+    #    df = pd.read_csv(test_dataset_path)
+    #    predictions = []
+    #    #TODO:
+    #    #recuperer test dataset avec dataloader
+    #    #pour chaque élément du dataset faire les 2 lignes suivantes:
+    #    output = self.predict(ligne)
+    #    predictions.append(_id,type_logement,date,hour,output,ground_truth)
+    #    pd.DataFrame(predictions).to_csv('./prediction_conso/results/prediction.csv', index=False)
+    #    self._eval_infos=[]
+    #    for step in predictions:
+    #        if step[1] is not in self._eval_infos:
+    #            self._eval_info[step[1]]=(0,0)
+    #        self._eval_infos[step[1]] += (np.abs(step[4]-step[5]),1)
+    #    for a in range(len(self._eval_infos)):
+    #        self._eval_infos[a][0] = self._eval_infos[a][0]/self._eval_infos[a][1]
+    #    #self._eval_infos type logement accuracy
+    #    with open("./prediction_conso/results/result_evaluations.csv", 'a') as f:
+    #        writer = csv.writer(f)
+    #        writer.writerow(["Date", time.time])
+    #        writer.writerow(["Emissions du training en kCO2e", self._emission])
+    #        writer.writerow(["Type de logement", "Accuracy"])
+    #        for e,v in self._eval_infos:
+    #            writer.writerow([e, v])
                 
 
     """
