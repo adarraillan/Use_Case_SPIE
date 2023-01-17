@@ -1,4 +1,5 @@
 import random
+from typing import List,Dict
 
 matrice_type_puissance_par_demie_heure = {'LV':0.65, 'LL':1, 'SL':0.125, 'TV':0.1, 'FG_1':0.1, 'CE_1': 0.18, 'CG': 0.1, 
                                                 'FO': 1.6, 'PL': 1.2, 'FG_2': 0.3, 'CE_2': 0.25}
@@ -6,23 +7,23 @@ matrice_type_puissance_par_demie_heure = {'LV':0.65, 'LL':1, 'SL':0.125, 'TV':0.
 
 class Individual:
 
-    def __init__(self,HC : list[int],plannings : list[dict[str,list]], day_consumption : list[float]):
-        self.HC : list[dict[str:int]]
-        self.plannings : list[dict[str,list]]
-        self.day_consumption : list[float]
+    def __init__(self,HC : List[int],plannings : List[Dict[str,List[int]]], day_consumption : List[float]):
+        self.HC : List[Dict[str:int]]
+        self.plannings : List[Dict[str,List[int]]]
+        self.day_consumption : List[float]
 
         self.HC = HC
         self.plannings = plannings
         self.day_consumption = day_consumption
 
-    def mutate_seq(self,limits : dict[str,int] , machine_type : str, house_index : int):
+    def mutate_seq(self,limits : Dict[str,int] , machine_type : str, house_index : int):
         #Get planning from house from specified machine
         machine_planning = self.plannings[house_index][machine_type]
 
         #Get random slot in planning
-        halfhour_index_index = random.randint(0,len(machine_planning))
+        halfhour_index_index = random.randint(0,len(machine_planning)-1)
         #Get random direction (plus or minus)
-        direction = random.sample([1,-1])
+        direction = random.sample([1,-1],1)[0]
 
         #Retrieve slot and remove it from the planning
         halfhour_index = machine_planning[halfhour_index_index]
@@ -30,7 +31,6 @@ class Individual:
 
         #Saving for return
         halfhour_index_save = halfhour_index
-
         #Moving the slot
         halfhour_index += direction
         if halfhour_index > limits["end"]:
@@ -53,25 +53,29 @@ class Individual:
         return (halfhour_index_save,halfhour_index)
 
     def mutate(self):
-        house_index = random.randint(0, len(self.plannings))
+        house_index = random.randint(0, len(self.plannings)-1)
 
         planning_index = self.plannings[house_index]
         machine_type = random.choice(list(planning_index.keys()))
         
-        if machine_type == 'CG' or machine_type == 'FG_1' or machine_type == 'FG_2' or machine_type == 'CE_1' or machine_type == 'CE_2':
-            (old_index,new_index) = self.mutate_seq(machine_type, house_index)
+        if machine_type in ['CG','FG_1','FG_2','CE_1','CE_2']:
+            (old_index,new_index) = self.mutate_seq(self.HC, machine_type, house_index)
         else:
-            (old_index,new_index) = self.mutate_no_seq(machine_type, house_index)
+            if machine_type in ["LV","LL","SL"]:
+                limits = {"start":0,"end":47}
+                (old_index,new_index) = self.mutate_no_seq(limits,machine_type, house_index)
+            else:
+                (old_index,new_index) = self.mutate_no_seq(self.HC,machine_type, house_index)
 
-        self.update(old_index, new_index, machine_type)
+        self.update(machine_type, old_index, new_index)
 
 
-    def mutate_no_seq(self,limits : dict[str,int], machine_type : str, house_index : int):
+    def mutate_no_seq(self,limits : Dict[str,int], machine_type : str, house_index : int):
         #Get planning from house from specified machine
         machine_planning = self.plannings[house_index][machine_type]
 
         #Get random direction (plus or minus)
-        direction = random.sample([1,-1])
+        direction = random.sample([1,-1],1)[0]
 
         #Find loop start and end
         start_loop, end_loop = None,None
@@ -80,9 +84,11 @@ class Individual:
                 if machine_planning[i+1] - machine_planning[i] != 1:
                     start_loop = machine_planning[i+1]
                     end_loop = machine_planning[i]
+                    break
             else:
                 start_loop = min(machine_planning)
                 end_loop = max(machine_planning)
+                break
 
         #Calculation of old_index and start_index
         old_index,new_index = None,None
