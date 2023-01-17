@@ -91,8 +91,9 @@ def recuit_simule(temperature,current_solution):
 
     while count_iteration_without_improvment < 1000:
         print_count += 1
-        if print_count%20 == 0:
-            print("Recuit",print_count,count_iteration_without_improvment)
+        if print_count%10 == 0:
+            print("\r",end="")
+            print("**Recuit",print_count,count_iteration_without_improvment,end="                ")
 
         neighbour_solution = get_neighbour_solution(current_solution)
 
@@ -110,17 +111,17 @@ def recuit_simule(temperature,current_solution):
     return best_current_solution
 
 
-matrice_type_puissance_par_demie_heure = {'LV':{"power":0.65,"nb_time_slot":2,"is_sequencable":False}, 
-                                            'LL':{"power":1,"nb_time_slot":2,"is_sequencable":False}, 
-                                            'SL':{"power":0.125,"nb_time_slot":8,"is_sequencable":False}, 
-                                            'TV':{"power":0.05,"nb_time_slot":[1,2,3,4,5],"is_sequencable":False}, 
-                                            'FG_1':{"power":0.1,"nb_time_slot":4,"is_sequencable":False}, 
-                                            'CE_1':{"power":0.18,"nb_time_slot":12,"is_sequencable":False}, 
-                                            'CG':{"power":0.1,"nb_time_slot":4,"is_sequencable":False}, 
-                                            'FO':{"power":0.8,"nb_time_slot":[1,2],"is_sequencable":False}, 
-                                            'PL':{"power":0.6,"nb_time_slot":[1,2],"is_sequencable":False}, 
-                                            'FG_2':{"power":0.3,"nb_time_slot":4,"is_sequencable":False}, 
-                                            'CE_2':{"power":0.25,"nb_time_slot":12,"is_sequencable":False}
+matrice_type_puissance_par_demie_heure = {'LV':{"power":float(0.65),"nb_time_slot":2,"is_sequencable":False}, 
+                                            'LL':{"power":float(1),"nb_time_slot":2,"is_sequencable":False}, 
+                                            'SL':{"power":float(0.125),"nb_time_slot":8,"is_sequencable":False}, 
+                                            'TV':{"power":float(0.05),"nb_time_slot":[1,2,3,4,5],"is_sequencable":False}, 
+                                            'FG_1':{"power":float(0.1),"nb_time_slot":4,"is_sequencable":False}, 
+                                            'CE_1':{"power":float(0.18),"nb_time_slot":12,"is_sequencable":False}, 
+                                            'CG':{"power":float(0.1),"nb_time_slot":4,"is_sequencable":False}, 
+                                            'FO':{"power":float(0.8),"nb_time_slot":[1,2],"is_sequencable":False}, 
+                                            'PL':{"power":float(0.6),"nb_time_slot":[1,2],"is_sequencable":False}, 
+                                            'FG_2':{"power":float(0.3),"nb_time_slot":4,"is_sequencable":False}, 
+                                            'CE_2':{"power":float(0.25),"nb_time_slot":12,"is_sequencable":False}
                                             }
 
 data = load_csv("data.csv")
@@ -139,14 +140,14 @@ curr_best = cost_function(best_found_solution)
 
 print("Enter While")
 n=0
-while  n < 10:
+while  n < 3:
     if cost_function(best_found_solution) < curr_best:
         curr_best = cost_function(best_found_solution)
         print(best_found_solution.day_consumption)
         print(cost_function(best_found_solution))
     
 
-    if n%100 == 0:
+    if n%1 == 0:
         print("iter n° :",n)
     
     n+=1
