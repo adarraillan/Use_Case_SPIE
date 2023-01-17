@@ -1,16 +1,45 @@
-
+import random
 
 class Individual:
 
     def __init__(self,HC : list[int],plannings : list[dict[str,list]], day_consumption : list[float]):
-        self.HC : list[int]
-        self.plannings : list[dict[list]]
+        self.HC : list[dict[str:int]]
+        self.plannings : list[dict[str,list]]
         self.day_consumption : list[float]
 
         self.HC = HC
         self.plannings = plannings
         self.day_consumption = day_consumption
 
-    #a time unit is 30 minutes
-    def mutate_seq(self,HC : list(int),count_time_unit : int,machine_type : str, house_index : int):
-        planning = self.plannings
+    def mutate_seq(self,machine_type : str, house_index : int):
+        #Get planning from house from specified machine
+        planning = self.plannings[house_index][machine_type]
+
+        #Get random slot in planning
+        halfhour_index_index = random.randint(0,len(planning))
+        #Get random direction (plus or minus)
+        direction = random.sample([1,-1])
+
+        #Retrieve slot and remove it from the planning
+        halfhour_index = planning[halfhour_index_index]
+        planning.pop(halfhour_index_index)
+
+        #Saving for return
+        halfhour_index_save = halfhour_index
+
+        #Moving the slot
+        while halfhour_index+direction in planning:
+            halfhour_index += direction
+            if halfhour_index > self.HC["end"]:
+                halfhour_index = self.HC["start"]
+            elif halfhour_index < self.HC["start"]:
+                halfhour_index = self.HC["end"]
+
+        #Putting new index in planning
+        planning.append(halfhour_index)
+        planning.sort()
+        self.plannings[house_index][machine_type] = planning
+
+        # return (old_index,new_index)
+        return (halfhour_index_save,halfhour_index)
+
