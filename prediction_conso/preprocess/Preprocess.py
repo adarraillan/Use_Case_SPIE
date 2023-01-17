@@ -22,14 +22,16 @@ class Preprocess:
     test : pd.DataFrame
     dev : pd.DataFrame
     columns = ['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
-    nb_house = 20
+    nb_house = 1
+    mean : list
+    std : list
 
     def __init__(self):
         # self.data = self.load_files()
         self.infoclimate = self.load_infoclimate()
         self.data_time_series = self.load_files_time_series()
         self.train, self.test, self.dev = self.split_data_time_series()
-        self.save_data()
+        # self.save_data()
 
     def save_data(self):
         self.train.to_csv(self.PATH_DATA_PROCESSED + "train.csv", index=False)
@@ -88,6 +90,20 @@ class Preprocess:
                 df_temps['index_date'] = pd.to_datetime(df_temps['date'], format='%m/%d/%Y').dt.strftime('%Y-%m-%d')
                 df_temps = df_temps.set_index(['index_date'])
 
+                # Add the cos and sin of day and year : cyclical continuous features
+                df_temps['Seconds'] = pd.to_datetime(df_temps.index).map(pd.Timestamp.timestamp)
+                day = 60*60*24
+                year = 365.2425*day
+                df_temps['Day sin'] = np.sin(df_temps['Seconds'] * (2* np.pi / day))
+                df_temps['Day cos'] = np.cos(df_temps['Seconds'] * (2 * np.pi / day))
+                df_temps['Year sin'] = np.sin(df_temps['Seconds'] * (2 * np.pi / year))
+                df_temps['Year cos'] = np.cos(df_temps['Seconds'] * (2 * np.pi / year))
+
+                # Drop the date column
+                df_temps = df_temps.drop(columns=['date'])
+                print(df_temps.head())
+    
+
                 # Sort data by increasing dates
                 df_temps = df_temps.sort_index()
 
@@ -108,7 +124,7 @@ class Preprocess:
                     else:
                         break
                     target = self.get_chunck(df_temps,start+dt.timedelta(length),1)
-                    target = target.drop(columns=['type','nb_inhabitant','surface','date'])
+                    target = target.drop(columns=['type','nb_inhabitant','surface'])
                     rows = [ row for row in list_month.to_numpy()]
                     X.append(rows)
                     Y.append([target.to_numpy()])
@@ -135,6 +151,15 @@ class Preprocess:
         X_test, X_dev, Y_test, Y_dev=train_test_split(X_test,Y_test, test_size=0.5, random_state=42)
         test = pd.concat([X_test,Y_test], axis=1)
         dev = pd.concat([X_dev,Y_dev], axis=1)
+
+
+        # TODO : scale data
+        # print(X_train.shape)
+        # # Scale data 
+        # self.mean = np.mean(X_train[:, :, 0])
+        # self.std = np.std(X_train[:, :, 0])
+        # print(self.mean,self.std)
+
         return train, test, dev
 
 #
