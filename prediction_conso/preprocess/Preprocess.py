@@ -22,6 +22,7 @@ class Preprocess:
     test : pd.DataFrame
     dev : pd.DataFrame
     columns = ['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
+    nb_house = 20
 
     def __init__(self):
         # self.data = self.load_files()
@@ -30,6 +31,13 @@ class Preprocess:
         self.train, self.test, self.dev = self.split_data_time_series()
         self.save_data()
 
+    def save_data(self):
+        self.train.to_csv(self.PATH_DATA_PROCESSED + "train.csv", index=False)
+        self.test.to_csv(self.PATH_DATA_PROCESSED + "test.csv", index=False)
+        self.dev.to_csv(self.PATH_DATA_PROCESSED + "dev.csv", index=False)
+#
+# Methods to create time series csv files
+#
     def load_infoclimate(self):
         df = pd.read_csv("./dataset/infoclimat.csv", sep=",")
         df['date'] = pd.to_datetime(df['dh_utc']).dt.strftime('%Y-%m-%d')
@@ -51,30 +59,6 @@ class Preprocess:
         df_date_climate = df_date_climate.set_index(['date'])
         return df_date_climate
 
-    def load_files(self):
-        df = pd.DataFrame(columns=self.columns)
-
-        for folder in os.listdir(self.PATH_DATA):
-            # print("FOLDER :",folder)
-            type_home = folder[5:6]
-            end = folder[6:]
-            [surface, nb_people] = end.split("-")
-
-            # Get all the data from the files of the folder in a dataframe
-            df_temps = pd.DataFrame()
-            for file in os.listdir(self.PATH_DATA + folder)[0:2]:
-                # print("FILE :",file)
-                df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + file, sep=",",skiprows=1)
-                df_temps.rename(columns = {'Unnamed: 0':'date', 'Unnamed: 1':'total'}, inplace = True)
-                df_temps['type'] = type_home
-                df_temps['nb_inhabitant'] = nb_people
-                df_temps['surface'] = surface
-                df = pd.concat([df,df_temps])
-        df['index_date'] = pd.to_datetime(df['date'], format='%m/%d/%Y')
-        df = df.set_index(['index_date'])
-        return df
-
-
     def load_files_time_series(self):
         decalage = 10
         length=29
@@ -91,15 +75,15 @@ class Preprocess:
             # Get all the data from the files of the folder in a dataframe
             df_temps = pd.DataFrame()
             
-            for house in os.listdir(self.PATH_DATA + folder)[0:2]:
+            for house in os.listdir(self.PATH_DATA + folder)[0:self.nb_house]:
 
-                # Read file and change column names
+                # Read file, change column names and add some columns
                 df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + house, sep=",",skiprows=1)
                 df_temps.rename(columns = {'Unnamed: 0':'date', 'Unnamed: 1':'total'}, inplace = True)
                 df_temps['type']=type_home
                 df_temps['nb_inhabitant']=nb_people
                 df_temps['surface']=surface
-                
+
                 #Set index of the dataframe
                 df_temps['index_date'] = pd.to_datetime(df_temps['date'], format='%m/%d/%Y').dt.strftime('%Y-%m-%d')
                 df_temps = df_temps.set_index(['index_date'])
@@ -115,8 +99,7 @@ class Preprocess:
                 start_date = pd.to_datetime(df_temps.index[start_index])
                 
                 i=0
-
-                # Pour chaque date de début, prendre les 30 jours suivants            
+                # For each start date, get the 30 following days            
                 for start in (start_date + dt.timedelta(decalage*i) for i in range(df_temps.shape[0]//decalage)):
                     d_start =(start + dt.timedelta(0)).strftime('%Y-%m-%d')
                     d_end = (start + dt.timedelta(length)).strftime('%Y-%m-%d')
@@ -125,28 +108,16 @@ class Preprocess:
                     else:
                         break
                     target = self.get_chunck(df_temps,start+dt.timedelta(length),1)
-                    # print(len(list_month))
+                    target = target.drop(columns=['type','nb_inhabitant','surface','date'])
                     rows = [ row for row in list_month.to_numpy()]
                     X.append(rows)
                     Y.append([target.to_numpy()])
-                    # list_month=[]
-                    # if start_date + dt.timedelta(31) > pd.to_datetime(df_temps.index[-1]):
-                    #     break
-                    # for single_date in (start_date + dt.timedelta(n) for n in range(30)) :
-                    #     if single_date in df_temps.index:
-                    #         list_conso_day = list(df_temps.loc[single_date.date().isoformat()])
-                    #         list_month.append(list_conso_day)
-                    # # Add the cosumption of the following day which will be the target value        
-                    # list_month.append(list(df_temps[self.columns].loc[(start_date+dt.timedelta(31)).date().isoformat()]))
-                    # list_houses.append(list_month)   
-            
-            # df_file = pd.concat([df_file,pd.DataFrame(list_houses)],axis=0)  
+
         X = pd.DataFrame(data=X,columns = self.columns)
         Y = pd.DataFrame(data=Y,columns=['Y'])
         out = pd.concat([X,Y],axis=1)
         print(out.shape)
         print(out.head())
-        # out = pd.DataFrame(data = list_houses, columns=['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29','Y'])  
         return out
 
     def get_chunck(self,df,start_date,length):
@@ -166,6 +137,33 @@ class Preprocess:
         dev = pd.concat([X_dev,Y_dev], axis=1)
         return train, test, dev
 
+#
+# Methods no longer used
+#
+
+    def load_files(self):
+        df = pd.DataFrame(columns=self.columns)
+
+        for folder in os.listdir(self.PATH_DATA):
+            # print("FOLDER :",folder)
+            type_home = folder[5:6]
+            end = folder[6:]
+            [surface, nb_people] = end.split("-")
+
+            # Get all the data from the files of the folder in a dataframe
+            df_temps = pd.DataFrame()
+            for file in os.listdir(self.PATH_DATA + folder)[0:self.nb_house]:
+                # print("FILE :",file)
+                df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + file, sep=",",skiprows=1)
+                df_temps.rename(columns = {'Unnamed: 0':'date', 'Unnamed: 1':'total'}, inplace = True)
+                df_temps['type'] = type_home
+                df_temps['nb_inhabitant'] = nb_people
+                df_temps['surface'] = surface
+                df = pd.concat([df,df_temps])
+        df['index_date'] = pd.to_datetime(df['date'], format='%m/%d/%Y')
+        df = df.set_index(['index_date'])
+        return df
+
     def split_data(self):
         X = self.data.drop(columns=self.columns)
         Y = self.data[self.columns]        
@@ -178,13 +176,7 @@ class Preprocess:
         print(test.shape)
         print(dev.shape) 
         return train, test, dev
-
-    def save_data(self):
-        self.data_time_series.to_csv(self.PATH_DATA_PROCESSED + "data_processed.csv", index=False)
-        self.train.to_csv(self.PATH_DATA_PROCESSED + "train.csv", index=False)
-        self.test.to_csv(self.PATH_DATA_PROCESSED + "test.csv", index=False)
-        self.dev.to_csv(self.PATH_DATA_PROCESSED + "dev.csv", index=False)
-    
+ 
     def preprocess_data(self):
         print(self.data.head())
         # Look for missing values
@@ -197,8 +189,3 @@ class Preprocess:
 
 preproc = Preprocess()
 
-# preproc.save_data()
-# preproc.load_files()
-# X_train, X_test, y_train, y_test = preproc.split_data_into_csv()
-# print(X_train, X_test, y_train, y_test)
-# preproc.preprocess_data()
