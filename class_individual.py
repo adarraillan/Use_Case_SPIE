@@ -48,7 +48,7 @@ class Individual:
         # return (old_index,new_index)
         return (halfhour_index_save,halfhour_index)  
 
-    def mutate(self, matrice_type_puissance_par_demie_heure):
+    def mutate(self):
         house_index = random.randint(0, len(self.plannings))
 
         planning_index = self.plannings[house_index]
@@ -59,10 +59,10 @@ class Individual:
         else:
             (old_index,new_index) = self.mutate_no_seq(machine_type, house_index)
 
+        self.update(old_index, new_index, machine_type)
 
 
     def mutate_no_seq(self, machine_type : str, house_index : int):
-<<<<<<< HEAD
         #Get planning from house from specified machine
         machine_planning = self.plannings[house_index][machine_type]
 
@@ -101,9 +101,10 @@ class Individual:
             if i > max:
                 max = i
         return max
-=======
-        planning = self.plannings
+
+        
   
-    def update(self,machine_type : str):
-        pass
->>>>>>> acb5f789c2487fb65c575de8957495da5774efff
+    def update(self,machine_type : str, old_index : int, new_index : int):
+        #update the day_consumption
+        self.day_consumption[old_index] -= matrice_type_puissance_par_demie_heure[machine_type]
+        self.day_consumption[new_index] += matrice_type_puissance_par_demie_heure[machine_type]
