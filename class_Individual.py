@@ -54,12 +54,14 @@ class Individual:
         machine_type = random.choice(list(planning_index.keys()))
         
         if machine_type == 'CG' or machine_type == 'FG_1' or machine_type == 'FG_2' or machine_type == 'CE_1' or machine_type == 'CE_2':
-            self.mutate_seq(machine_type, house_index)
+            (old_index,new_index) = self.mutate_seq(machine_type, house_index)
         else:
-            self.mutate_no_seq(machine_type, house_index)
+            (old_index,new_index) = self.mutate_no_seq(machine_type, house_index)
 
 
 
     def mutate_no_seq(self, machine_type : str, house_index : int):
         planning = self.plannings
   
+    def update(self,machine_type : str):
+        pass
