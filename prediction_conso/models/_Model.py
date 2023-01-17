@@ -14,7 +14,7 @@ import datetime
 from codecarbon import EmissionsTracker
 import csv
 import numpy as np
-from dataset.DataLoader import DataLoader as dl
+from prediction_conso.dataset import DataLoader as dl
 # %matplotlib inline
 
 
@@ -32,9 +32,6 @@ from dataset.DataLoader import DataLoader as dl
 class Model:
     _model = None
     _model_name : str = "Base Model"
-    _optimizer = "adam"
-    _loss = tf.keras.losses.MeanSquaredError
-    _metrics = 'accuracy'
     _emission : float = 0
     _eval_infos = None
     _data_loader = dl.DataLoader()
@@ -43,12 +40,8 @@ class Model:
     """
         This function initialize our class
     """
-    def __init__(self,model_name,optimizer="adam",loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),metrics='accuracy'):
+    def __init__(self,model_name="Base Model"):
         self._model_name = model_name
-        self._optimizer = optimizer
-        self._loss = loss
-        self._metrics = metrics
-        
 
 #usefull ?
     # def _build_model(self,load=False):
@@ -127,7 +120,7 @@ class Model:
             epochs=epochs,
             batch_size=batch_size,
             validation_data=(dev_data, dev_labels), 
-            callbacks=[earlyStoping_callback,tensorboard_callback])
+            callbacks=[earlyStoping_callback])#,tensorboard_callback])
 
         self._emission  = tracker.stop()
         title = f"{self._model_name} - Learning curves"
@@ -159,9 +152,9 @@ class Model:
     """
         This function evaluate the model and save the results in 2 csv file : in prediction.csv where the predictions are record and in result_evaluation.csv where the results of the evaluation are record.
         Function variables:
-            test_dataset_path : str
+            self
     """
-    #def evaluate(self, test_dataset_path="./prediction_conso/dataset/data_preprocess/test.csv"):
+    #def evaluate(self):
     #    self.clean_result()
     #    df = pd.read_csv(test_dataset_path)
     #    predictions = []
