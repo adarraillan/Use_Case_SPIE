@@ -15,7 +15,7 @@ class Preprocess:
 
     PATH_DATA = "./dataset/data/"
     PATH_DATA_PROCESSED = "./dataset/data_preprocessed/"
-    data :pd.DataFrame
+    # data :pd.DataFrame
     infoclimate : pd.DataFrame
     data_time_series : pd.DataFrame()
     train : pd.DataFrame
@@ -33,7 +33,8 @@ class Preprocess:
         # self.data = self.load_files()
         self.infoclimate = self.load_infoclimate()
         self.data_time_series = self.load_files_time_series()
-        # self.train, self.test, self.dev = self.split_data()
+        self.train, self.test, self.dev = self.split_data_time_series()
+        self.save_data()
 
     def load_infoclimate(self):
         df = pd.read_csv("./dataset/infoclimat.csv", sep=",")
@@ -43,7 +44,6 @@ class Preprocess:
         df = df.set_index(['index_date'])
         # select the list of dates that are in the dataset
         dates = pd.unique(df[['date']].values.ravel())
-        print(dates)
         #compute the average temperature for each date
         df_date_climate = pd.DataFrame(columns=["date","avg_temp"])
         for date in dates:
@@ -55,48 +55,46 @@ class Preprocess:
         # Turn dates into the index
         df_date_climate['date'] = pd.to_datetime(df_date_climate['date']).dt.strftime('%Y-%d-%m')
         df_date_climate = df_date_climate.set_index(['date'])
-        print(df_date_climate)
         return df_date_climate
 
-    # def load_files(self):
-    #     df = pd.DataFrame(columns=self.columns)
+    def load_files(self):
+        df = pd.DataFrame(columns=self.columns)
 
-    #     for folder in os.listdir(self.PATH_DATA):
-    #         # print("FOLDER :",folder)
-    #         type = folder[5:6]
-    #         end = folder[6:]
-    #         [surface, nb_people] = end.split("-")
-
-    #         # Get all the data from the files of the folder in a dataframe
-    #         df_temps = pd.DataFrame()
-    #         for file in os.listdir(self.PATH_DATA + folder)[0:2]:
-    #             # print("FILE :",file)
-    #             df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + file, sep=",",skiprows=1)
-    #             df_temps.rename(columns = {'Unnamed: 0':'date', 'Unnamed: 1':'total'}, inplace = True)
-    #             df_temps['type'] = type
-    #             df_temps['nb_inhabitant'] = nb_people
-    #             df_temps['surface'] = surface
-    #             df = pd.concat([df,df_temps])
-    #     df['index_date'] = pd.to_datetime(df['date'], format='%m/%d/%Y')
-    #     df = df.set_index(['index_date'])
-    #     return df
-
-
-    def load_files_time_series(self):
-        decalage = 10
-        df_file = pd.DataFrame()
         for folder in os.listdir(self.PATH_DATA):
             # print("FOLDER :",folder)
             type = folder[5:6]
             end = folder[6:]
             [surface, nb_people] = end.split("-")
 
-            list_houses = []
-            
+            # Get all the data from the files of the folder in a dataframe
+            df_temps = pd.DataFrame()
+            for file in os.listdir(self.PATH_DATA + folder)[0:2]:
+                # print("FILE :",file)
+                df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + file, sep=",",skiprows=1)
+                df_temps.rename(columns = {'Unnamed: 0':'date', 'Unnamed: 1':'total'}, inplace = True)
+                df_temps['type'] = type
+                df_temps['nb_inhabitant'] = nb_people
+                df_temps['surface'] = surface
+                df = pd.concat([df,df_temps])
+        df['index_date'] = pd.to_datetime(df['date'], format='%m/%d/%Y')
+        df = df.set_index(['index_date'])
+        return df
+
+
+    def load_files_time_series(self):
+        decalage = 10
+        df_file = pd.DataFrame()
+        list_houses = []
+        for folder in os.listdir(self.PATH_DATA):
+            print("FOLDER :",folder)
+            type = folder[5:6]
+            end = folder[6:]
+            [surface, nb_people] = end.split("-")
+
             # Get all the data from the files of the folder in a dataframe
             df_temps = pd.DataFrame()
             
-            for house in os.listdir(self.PATH_DATA + folder)[0:2]:
+            for house in os.listdir(self.PATH_DATA + folder)[0:10]:
 
                 # Read file and change column names
                 df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + house, sep=",",skiprows=1)
@@ -117,9 +115,9 @@ class Preprocess:
                 # Pour chaque date de début, prendre les 30 jours suivants            
                 for start_date in (df_temps.index[start_index] + dt.timedelta(decalage*i) for i in range(df_temps.shape[0]//decalage)):
                     list_month = []
-                    if start_date + dt.timedelta(30) > df_temps.index[-1]:
+                    if start_date + dt.timedelta(31) > df_temps.index[-1]:
                         break
-                    for single_date in (start_date + dt.timedelta(n) for n in range(29)) :
+                    for single_date in (start_date + dt.timedelta(n) for n in range(30)) :
                         # print(single_date.date().strftime(format='%Y-%d-%m'))
                         if single_date.date().strftime(format='%Y-%d-%m') in self.infoclimate.index :
                             temperature = self.infoclimate['avg_temp'].loc[single_date.date().strftime(format='%Y-%d-%m')]
@@ -129,40 +127,39 @@ class Preprocess:
                             list_conso_day = list(df_temps.loc[single_date.date().isoformat()])
                             list_conso_day.append(temperature)
                             list_month.append(list_conso_day)
-                            print(list_month)
                     # Add the cosumption of the following day which will be the target value        
-                    list_month.append(list(df_temps[self.columns].loc[(start_date+dt.timedelta(30)).date().isoformat()]))
-                    list_houses.append({type+'-'+surface+'-'+nb_people : list_month})   
-            df_file = pd.concat([df_file,pd.DataFrame(list_houses)],axis=1)    
-        print(df_file.shape)
-        print(df_file.head())
-        return df_file
+                    list_month.append(list(df_temps[self.columns].loc[(start_date+dt.timedelta(31)).date().isoformat()]))
+                    list_houses.append(list_month)   
+            # df_file = pd.concat([df_file,pd.DataFrame(list_houses)],axis=0)  
+        out = pd.DataFrame(data = list_houses, columns=['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29','Y'])  
+        return out
 
-    # def split_data_time_series(self):
-    #     # Split data in train, test and dev for each type of house
-    #     for (colname,colval) in df.iteritems():
-    #         print(colname, colval.values)
-    #     X = self.data.drop(columns=self.columns)
-    #     Y = self.data[self.columns]        
-    #     X_train, X_test, y_train, y_test=train_test_split(X,Y, test_size=0.33, random_state=42)
-    #     train = pd.concat([X_train,y_train], axis=1)
-    #     X_test, X_dev, y_test, y_dev=train_test_split(X_test,y_test, test_size=0.5, random_state=42)
-    #     test = pd.concat([X_test,y_test], axis=1)
-    #     dev = pd.concat([X_dev,y_dev], axis=1)
-    #     return train, test, dev
+    def split_data_time_series(self):
+        # Split data in train, test and dev
+        X = self.data_time_series.drop(columns=['Y'])
+        Y = self.data_time_series['Y']        
+        X_train, X_test, Y_train, Y_test=train_test_split(X,Y, test_size=0.33, random_state=42)
+        train = pd.concat([X_train,Y_train], axis=1)
+        X_test, X_dev, Y_test, Y_dev=train_test_split(X_test,Y_test, test_size=0.5, random_state=42)
+        test = pd.concat([X_test,Y_test], axis=1)
+        dev = pd.concat([X_dev,Y_dev], axis=1)
+        return train, test, dev
 
     def split_data(self):
         X = self.data.drop(columns=self.columns)
         Y = self.data[self.columns]        
         X_train, X_test, y_train, y_test=train_test_split(X,Y, test_size=0.33, random_state=42)
         train = pd.concat([X_train,y_train], axis=1)
-        X_test, X_dev, y_test, y_dev=train_test_split(X_test,y_test, test_size=0.5, random_state=42)
+        X_test, X_dev, y_test, y_dev=train_test_split(X_test,y_test, test_size=0.3, random_state=42)
         test = pd.concat([X_test,y_test], axis=1)
         dev = pd.concat([X_dev,y_dev], axis=1)
+        print(train.shape)
+        print(test.shape)
+        print(dev.shape) 
         return train, test, dev
 
     def save_data(self):
-        self.data.to_csv(self.PATH_DATA_PROCESSED + "data_processed.csv", index=False)
+        self.data_time_series.to_csv(self.PATH_DATA_PROCESSED + "data_processed.csv", index=False)
         self.train.to_csv(self.PATH_DATA_PROCESSED + "train.csv", index=False)
         self.test.to_csv(self.PATH_DATA_PROCESSED + "test.csv", index=False)
         self.dev.to_csv(self.PATH_DATA_PROCESSED + "dev.csv", index=False)
