@@ -30,8 +30,9 @@ class Preprocess:
         # self.data = self.load_files()
         self.infoclimate = self.load_infoclimate()
         self.data_time_series = self.load_files_time_series()
+        print(self.data_time_series.head)
         self.train, self.test, self.dev = self.split_data_time_series()
-        # self.save_data()
+        self.save_data()
 
     def save_data(self):
         self.train.to_csv(self.PATH_DATA_PROCESSED + "train.csv", index=False)
