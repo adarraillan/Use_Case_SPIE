@@ -7,6 +7,7 @@ from preprocess_functions import *
 from Individual import Individual
 import copy
 import joblib
+import numpy as np
 
 def calc_consumption_from_planing(plan,mat,day_consumption):
     for house in plan:
@@ -126,7 +127,7 @@ matrice_type_puissance_par_demie_heure = {'LV':{"power":float(0.65),"nb_time_slo
                                             }
 
 data = load_csv("data.csv")
-empty_planning = generate_empty_planning(data)
+empty_planning = np.array(generate_empty_planning(data))
 empty_planning = empty_planning[:100]
 
 
