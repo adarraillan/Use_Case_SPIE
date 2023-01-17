@@ -1,7 +1,7 @@
 import random
 from typing import List,Dict
 
-matrice_type_puissance_par_demie_heure = {'LV':0.65, 'LL':1, 'SL':0.125, 'TV':0.1, 'FG_1':0.1, 'CE_1': 0.18, 'CG': 0.1, 
+matrice_type_puissance_per_demie_heure = {'LV':0.65, 'LL':1, 'SL':0.125, 'TV':0.1, 'FG_1':0.1, 'CE_1': 0.18, 'CG': 0.1, 
                                                 'FO': 1.6, 'PL': 1.2, 'FG_2': 0.3, 'CE_2': 0.25}
 
 
@@ -111,16 +111,12 @@ class Individual:
         return (old_index,new_index)
         
         
-    def getMax(list):
-        max = list[0]
-        for i in list:
-            if i > max:
-                max = i
-        return max
+    def getMax(self):
+        return max(self.day_consumption)
 
         
   
     def update(self,machine_type : str, old_index : int, new_index : int):
         #update the day_consumption
-        self.day_consumption[old_index] -= matrice_type_puissance_par_demie_heure[machine_type]
-        self.day_consumption[new_index] += matrice_type_puissance_par_demie_heure[machine_type]
+        self.day_consumption[old_index] -= matrice_type_puissance_per_demie_heure[machine_type]
+        self.day_consumption[new_index] += matrice_type_puissance_per_demie_heure[machine_type]

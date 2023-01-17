@@ -16,15 +16,15 @@ plannings = [
     }
 ]
 
-matrice_type_puissance_par_demie_heure = {'LV':0.65, 'LL':1, 'SL':0.125, 'TV':0.1, 'FG_1':0.1, 'CE_1': 0.18, 'CG': 0.1, 
-                                                'FO': 1.6, 'PL': 1.2, 'FG_2': 0.3, 'CE_2': 0.25}
+matrice_type_puissance_par_demie_heure = {'LV':[0.65,2], 'LL':[1,2], 'SL':[0.125,8], 'TV':[0.05,[0,1,2,3,4,5]], 'FG_1':[0.1,4], 'CE_1': [0.18,12], 'CG': [0.1,4], 
+                                                'FO': [0.8,[0,1,2]], 'PL': [0.6,-1], 'FG_2': [0.3,4], 'CE_2': [0.25,12]}
 
 
 def calc_consumption_from_planing(plan,mat,day_consumption):
     for house in plan:
         for machine in house.keys():
             for time_slot in house[machine]:
-                day_consumption[time_slot] += mat[machine]
+                day_consumption[time_slot] += mat[machine][0]
     return day_consumption
 
 
