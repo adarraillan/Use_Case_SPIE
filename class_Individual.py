@@ -17,22 +17,27 @@ class Individual:
 
     def mutate_seq(self,machine_type : str, house_index : int):
         #Get planning from house from specified machine
-        planning = self.plannings[house_index][machine_type]
+        machine_planning = self.plannings[house_index][machine_type]
 
         #Get random slot in planning
-        halfhour_index_index = random.randint(0,len(planning))
+        halfhour_index_index = random.randint(0,len(machine_planning))
         #Get random direction (plus or minus)
         direction = random.sample([1,-1])
 
         #Retrieve slot and remove it from the planning
-        halfhour_index = planning[halfhour_index_index]
-        planning.pop(halfhour_index_index)
+        halfhour_index = machine_planning[halfhour_index_index]
+        machine_planning.pop(halfhour_index_index)
 
         #Saving for return
         halfhour_index_save = halfhour_index
 
         #Moving the slot
-        while halfhour_index+direction in planning:
+        halfhour_index += direction
+        if halfhour_index > self.HC["end"]:
+            halfhour_index = self.HC["start"]
+        elif halfhour_index < self.HC["start"]:
+            halfhour_index = self.HC["end"]
+        while halfhour_index in machine_planning:
             halfhour_index += direction
             if halfhour_index > self.HC["end"]:
                 halfhour_index = self.HC["start"]
@@ -40,9 +45,9 @@ class Individual:
                 halfhour_index = self.HC["end"]
 
         #Putting new index in planning
-        planning.append(halfhour_index)
-        planning.sort()
-        self.plannings[house_index][machine_type] = planning
+        machine_planning.append(halfhour_index)
+        machine_planning.sort()
+        self.plannings[house_index][machine_type] = machine_planning
 
         # return (old_index,new_index)
         return (halfhour_index_save,halfhour_index)
@@ -59,9 +64,19 @@ class Individual:
             (old_index,new_index) = self.mutate_no_seq(machine_type, house_index)
 
 
+    def mutate_no_seq(self,limits : dict[str,int], machine_type : str, house_index : int):
+        #Get planning from house from specified machine
+        machine_planning = self.plannings[house_index][machine_type]
 
-    def mutate_no_seq(self, machine_type : str, house_index : int):
-        planning = self.plannings
+        #Get random direction (plus or minus)
+        direction = random.sample([1,-1])
+
+        for i in range(len(machine_planning)):
+            machine_planning[i] += direction
+            if machine_planning[i] > limits["end"]:
+                machine_planning[i] = limits["start"]
+            elif machine_planning[i] < limits["start"]:
+                machine_planning[i] = limits["end"]
   
     def update(self,machine_type : str):
         pass
