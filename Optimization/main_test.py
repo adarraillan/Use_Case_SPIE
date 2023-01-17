@@ -1,4 +1,4 @@
-import class_individual
+from Individual import Individual
 
 HC = {"start":0,"end":15}
 
@@ -30,7 +30,7 @@ def calc_consumption_from_planing(plan,mat,day_consumption):
 
 day_consumption = calc_consumption_from_planing(plannings,matrice_type_puissance_par_demie_heure,day_consumption)
 
-individual = class_individual.Individual(HC,plannings,day_consumption)
+individual = Individual(HC,plannings,day_consumption)
 
 print("Before")
 print(individual.plannings)
