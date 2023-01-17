@@ -15,7 +15,7 @@ class Individual:
         self.plannings = plannings
         self.day_consumption = day_consumption
 
-    def mutate_seq(self,machine_type : str, house_index : int):
+    def mutate_seq(self,limits : dict[str,int] , machine_type : str, house_index : int):
         #Get planning from house from specified machine
         machine_planning = self.plannings[house_index][machine_type]
 
@@ -33,16 +33,16 @@ class Individual:
 
         #Moving the slot
         halfhour_index += direction
-        if halfhour_index > self.HC["end"]:
-            halfhour_index = self.HC["start"]
-        elif halfhour_index < self.HC["start"]:
-            halfhour_index = self.HC["end"]
+        if halfhour_index > limits["end"]:
+            halfhour_index = limits["start"]
+        elif halfhour_index < limits["start"]:
+            halfhour_index = limits["end"]
         while halfhour_index in machine_planning:
             halfhour_index += direction
-            if halfhour_index > self.HC["end"]:
-                halfhour_index = self.HC["start"]
-            elif halfhour_index < self.HC["start"]:
-                halfhour_index = self.HC["end"]
+            if halfhour_index > limits["end"]:
+                halfhour_index = limits["start"]
+            elif halfhour_index < limits["start"]:
+                halfhour_index = limits["end"]
 
         #Putting new index in planning
         machine_planning.append(halfhour_index)
@@ -52,7 +52,7 @@ class Individual:
         # return (old_index,new_index)
         return (halfhour_index_save,halfhour_index)
 
-    def mutate(self, matrice_type_puissance_par_demie_heure):
+    def mutate(self):
         house_index = random.randint(0, len(self.plannings))
 
         planning_index = self.plannings[house_index]
@@ -63,6 +63,8 @@ class Individual:
         else:
             (old_index,new_index) = self.mutate_no_seq(machine_type, house_index)
 
+        self.update(old_index, new_index, machine_type)
+
 
     def mutate_no_seq(self,limits : dict[str,int], machine_type : str, house_index : int):
         #Get planning from house from specified machine
@@ -71,12 +73,48 @@ class Individual:
         #Get random direction (plus or minus)
         direction = random.sample([1,-1])
 
+        #Find loop start and end
+        start_loop, end_loop = None,None
         for i in range(len(machine_planning)):
-            machine_planning[i] += direction
-            if machine_planning[i] > limits["end"]:
-                machine_planning[i] = limits["start"]
-            elif machine_planning[i] < limits["start"]:
-                machine_planning[i] = limits["end"]
+            if i+1 < len(machine_planning):
+                if machine_planning[i+1] - machine_planning[i] != 1:
+                    start_loop = machine_planning[i+1]
+                    end_loop = machine_planning[i]
+            else:
+                start_loop = min(machine_planning)
+                end_loop = max(machine_planning)
+
+        #Calculation of old_index and start_index
+        old_index,new_index = None,None
+        if direction == 1:
+            end_loop = (end_loop+direction)%limits["end"]
+            old_index = start_loop
+            new_index = end_loop
+        elif direction == -1:
+            start_loop = (start_loop+direction)%limits["end"]
+            old_index = end_loop
+            new_index = start_loop
+
+        #Putting new index in planning
+        machine_planning.remove(old_index)
+        machine_planning.append(new_index)
+        machine_planning.sort()
+        self.plannings[house_index][machine_type] = machine_planning
+
+        # return (old_index,new_index)
+        return (old_index,new_index)
+        
+        
+    def getMax(list):
+        max = list[0]
+        for i in list:
+            if i > max:
+                max = i
+        return max
+
+        
   
-    def update(self,machine_type : str):
-        pass
+    def update(self,machine_type : str, old_index : int, new_index : int):
+        #update the day_consumption
+        self.day_consumption[old_index] -= matrice_type_puissance_par_demie_heure[machine_type]
+        self.day_consumption[new_index] += matrice_type_puissance_par_demie_heure[machine_type]
