@@ -6,6 +6,7 @@ import random
 from preprocess_functions import *
 from Individual import Individual
 import copy
+import joblib
 
 def calc_consumption_from_planing(plan,mat,day_consumption):
     for house in plan:
@@ -156,3 +157,6 @@ while  n < 3:
 print(best_found_solution.day_consumption)
 print(cost_function(best_found_solution))
 
+joblib.dump(best_found_solution.plannings,"Plannings.joblib")
+joblib.dump(best_found_solution.day_consumption,"Day_Consumption.joblib")
+joblib.dump(best_found_solution,"Solution.joblib")
