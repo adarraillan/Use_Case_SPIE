@@ -16,6 +16,7 @@ class Individual:
         self.HC = HC
         self.plannings = plannings
         self.day_consumption = day_consumption
+    
 
     def mutate_seq(self,limits : Dict[str,int] , machine_type : str, house_index : int):
         #Get planning from house from specified machine
@@ -24,7 +25,7 @@ class Individual:
         #Get random slot in planning
         halfhour_index_index = random.randint(0,len(machine_planning)-1)
         #Get random direction (plus or minus)
-        direction = random.sample([1,-1],1)[0]
+        direction = random.sample([-1,1],1)[0]
 
         #Retrieve slot and remove it from the planning
         halfhour_index = machine_planning[halfhour_index_index]
@@ -57,7 +58,8 @@ class Individual:
         house_index = random.randint(0, len(self.plannings)-1)
 
         planning_index = self.plannings[house_index]
-        machine_type = random.choice(list(planning_index.keys()))
+        machine_list = [x for x in list(planning_index.keys()) if not x in ['TV','FO','PL']]
+        machine_type = random.choice(machine_list)
         
         if machine_type in ['CG','FG_1','FG_2','CE_1','CE_2']:
             (old_index,new_index) = self.mutate_seq(self.HC, machine_type, house_index)
@@ -76,7 +78,8 @@ class Individual:
         machine_planning = self.plannings[house_index][machine_type]
 
         #Get random direction (plus or minus)
-        direction = random.sample([1,-1],1)[0]
+        direction = random.sample([-1,1],1)[0]
+
 
         #Find loop start and end
         start_loop, end_loop = None,None
