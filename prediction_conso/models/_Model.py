@@ -103,12 +103,11 @@ class Model:
             epochs : int
             batch_size : int
     """
-    def train(self, epochs=100, batch_size=100,patience = 10):
+    def train(self, epochs=10, batch_size=100,patience = 10):
 
         self.clean_logs()
 
         #use dataloader here
-
         X_train, Y_train = self._data_loader.data_retriever("train")
         X_dev, Y_dev = self._data_loader.data_retriever("dev")
 
@@ -117,30 +116,24 @@ class Model:
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
         earlyStoping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=patience)
         cp1 = tf.keras.callbacks.ModelCheckpoint(filepath='./prediction_conso/models/best_model.h5', monitor='val_loss', save_best_only=True)
-
-        #tracking emissions
-        # tracker = EmissionsTracker()
-        # tracker.start()
-
+  
         #model training
         self._model.summary()
         self._model.fit(X_train, Y_train, validation_data=(X_dev, Y_dev), batch_size=batch_size, epochs=epochs, callbacks=[earlyStoping_callback,cp1,tensorboard_callback])
         
-        # hist = self._model.fit( 
-        #     train_data, train_labels, 
-        #     epochs=epochs,
-        #     batch_size=batch_size,
-        #     validation_data=(dev_data, dev_labels), 
-        #     callbacks=[earlyStoping_callback,tensorboard_callback])
-        
-
-        # self._emission  = tracker.stop()
-        # title = f"{self._model_name} - Learning curves"
-        # self.plot_learning_curves(hist, title)
-        # print(f"Emissions: {self._emission} kgCO2e")
-
-        #see model in tensorboard
-        # !tensorboard --logdir ./logs/fit
+    def plot_predictions_test(self, start=0, end=100):
+        X, Y = self._data_loader.data_retriever("test")
+        model = self._model
+        predictions = model.predict(X)
+        pred_total_conso = predictions[:, 2]
+        actual_total_conso = Y[:, 2]
+        df = pd.DataFrame(data={'Total conso Predictions': pred_total_conso,
+                                'Total conso Actuals':actual_total_conso ,
+                                })
+        plt.plot(df['Total conso Predictions'][start:end])
+        plt.plot(df['Total conso Actuals'][start:end])
+        plt.show()
+        return df[start:end]
 
 
     """
