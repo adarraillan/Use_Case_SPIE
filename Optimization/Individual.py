@@ -119,5 +119,5 @@ class Individual:
   
     def update(self,machine_type : str, old_index : int, new_index : int):
         #update the day_consumption
-        self.day_consumption[old_index] = round(self.day_consumption[old_index] - matrice_type_puissance_per_demie_heure[machine_type],2)
-        self.day_consumption[new_index] = round(self.day_consumption[new_index] + matrice_type_puissance_per_demie_heure[machine_type],2)
+        self.day_consumption[old_index] = round(self.day_consumption[old_index] - matrice_type_puissance_per_demie_heure[machine_type],3)
+        self.day_consumption[new_index] = round(self.day_consumption[new_index] + matrice_type_puissance_per_demie_heure[machine_type],3)
