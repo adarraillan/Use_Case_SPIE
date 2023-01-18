@@ -114,6 +114,9 @@ class Preprocess:
                 # Concatenate the climate information to the dataframe
                 df_temps = df_temps.join(self.infoclimate, on='index_date')
 
+                # Fill the missing values with the previous value
+                df_temps['avg_temp'] = df_temps['avg_temp'].fillna(method='ffill')
+
                 # Tirer au hasard une date de début
                 start_index = rd.randint(0, 10)
                 start_date = pd.to_datetime(df_temps.index[start_index])

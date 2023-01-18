@@ -116,22 +116,23 @@ class Model:
         log_dir = "./prediction_conso/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
         earlyStoping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=patience)
+        cp1 = tf.keras.callbacks.ModelCheckpoint(filepath='./prediction_conso/models/best_model.h5', monitor='val_loss', save_best_only=True)
 
         #tracking emissions
         # tracker = EmissionsTracker()
         # tracker.start()
 
         #model training
-        print(type(X_train[0][0][0]))
-        cp1 = tf.keras.callbacks.ModelCheckpoint(filepath='./prediction_conso/models/best_model.h5', monitor='val_loss', save_best_only=True)
-        self._model.fit(X_train, Y_train, validation_data=(X_dev, Y_dev), epochs=10, callbacks=[earlyStoping_callback,cp1,tensorboard_callback])
+        self._model.summary()
+        self._model.fit(X_train, Y_train, validation_data=(X_dev, Y_dev), batch_size=batch_size, epochs=epochs, callbacks=[earlyStoping_callback,cp1,tensorboard_callback])
+        
         # hist = self._model.fit( 
         #     train_data, train_labels, 
         #     epochs=epochs,
         #     batch_size=batch_size,
         #     validation_data=(dev_data, dev_labels), 
         #     callbacks=[earlyStoping_callback,tensorboard_callback])
-        self._model.summary()
+        
 
         # self._emission  = tracker.stop()
         # title = f"{self._model_name} - Learning curves"
