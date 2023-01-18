@@ -4,6 +4,7 @@ from PIL import Image
 import csv
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 import datetime as dt
 import random as rd
 
@@ -18,11 +19,14 @@ class Preprocess:
     # data :pd.DataFrame
     infoclimate : pd.DataFrame
     data_time_series : pd.DataFrame()
-    train : pd.DataFrame
-    test : pd.DataFrame
-    dev : pd.DataFrame
-    columns = ['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
-    nb_house = 1
+    X_train : pd.DataFrame()
+    Y_train : pd.DataFrame()
+    X_test :  pd.DataFrame()
+    Y_test : pd.DataFrame()
+    X_dev : pd.DataFrame()
+    Y_dev : pd.DataFrame()
+    columns = ['start','d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
+    nb_house = 50
     mean : list
     std : list
 
@@ -30,14 +34,17 @@ class Preprocess:
         # self.data = self.load_files()
         self.infoclimate = self.load_infoclimate()
         self.data_time_series = self.load_files_time_series()
-        print(self.data_time_series.head)
-        self.train, self.test, self.dev = self.split_data_time_series()
+        self.X_train, self.Y_train, self.X_test, self.Y_test, self.X_dev, self.Y_dev= self.split_data_time_series()
         self.save_data()
+        # self.preprocess_data()
 
     def save_data(self):
-        self.train.to_csv(self.PATH_DATA_PROCESSED + "train.csv", index=False)
-        self.test.to_csv(self.PATH_DATA_PROCESSED + "test.csv", index=False)
-        self.dev.to_csv(self.PATH_DATA_PROCESSED + "dev.csv", index=False)
+        train = pd.concat([self.X_train,self.Y_train],axis=1)
+        test = pd.concat([self.X_test,self.Y_test],axis=1)
+        dev = pd.concat([self.X_dev,self.Y_dev],axis=1)
+        train.to_csv(self.PATH_DATA_PROCESSED + "train.csv", index=False)
+        test.to_csv(self.PATH_DATA_PROCESSED + "test.csv", index=False)
+        dev.to_csv(self.PATH_DATA_PROCESSED + "dev.csv", index=False)
 #
 # Methods to create time series csv files
 #
@@ -69,8 +76,8 @@ class Preprocess:
         list_houses = []
         X = []
         Y = []
-        for folder in os.listdir(self.PATH_DATA):
-            print("FOLDER :",folder)
+        for folder in os.listdir(self.PATH_DATA)[0:4]:
+            print("PREPROCESSING FOLDER :",folder)
             type_home = folder[5:6]
             end = folder[6:]
             [surface, nb_people] = end.split("-")
@@ -101,9 +108,7 @@ class Preprocess:
                 df_temps['Year cos'] = np.cos(df_temps['Seconds'] * (2 * np.pi / year))
 
                 # Drop the date column
-                df_temps = df_temps.drop(columns=['date'])
-                # print(df_temps.head())
-    
+                df_temps = df_temps.drop(columns=['date'])    
 
                 # Sort data by increasing dates
                 df_temps = df_temps.sort_index()
@@ -124,17 +129,25 @@ class Preprocess:
                         list_month = df_temps.loc[d_start:d_end] 
                     else:
                         break
-                    target = self.get_chunck(df_temps,start+dt.timedelta(length),1)
-                    target = target.drop(columns=['type','nb_inhabitant','surface'])
+                    target = self.get_chunck(df_temps,start+dt.timedelta(length+1),0)
+                    target = target.drop(columns=['type','nb_inhabitant','surface','avg_temp','Seconds','Day sin','Day cos','Year sin','Year cos'])
                     rows = [ row for row in list_month.to_numpy()]
+                    rows.insert(0,d_start)
                     X.append(rows)
-                    Y.append([target.to_numpy()])
-
+                    Y.append(target.to_numpy())
+                    
+                    
+        Y = pd.Series(Y).values.reshape(-1,1)
         X = pd.DataFrame(data=X,columns = self.columns)
         Y = pd.DataFrame(data=Y,columns=['Y'])
         out = pd.concat([X,Y],axis=1)
-        print(out.shape)
-        print(out.head())
+
+        #Set the start date as index
+        out = out.set_index(['start'])
+        # Sort by increasing dates
+        out = out.sort_index()
+
+        # print(out.shape)
         return out
 
     def get_chunck(self,df,start_date,length):
@@ -146,22 +159,25 @@ class Preprocess:
     def split_data_time_series(self):
         # Split data in train, test and dev
         X = self.data_time_series.drop(columns=['Y'])
-        Y = self.data_time_series['Y']        
-        X_train, X_test, Y_train, Y_test=train_test_split(X,Y, test_size=0.33, random_state=42)
-        train = pd.concat([X_train,Y_train], axis=1)
-        X_test, X_dev, Y_test, Y_dev=train_test_split(X_test,Y_test, test_size=0.5, random_state=42)
-        test = pd.concat([X_test,Y_test], axis=1)
-        dev = pd.concat([X_dev,Y_dev], axis=1)
+        Y = self.data_time_series['Y']
+        end_train = round(X.shape[0]*0.70)
+        end_test = round(X.shape[0]*0.85)
+        X_train, Y_train = X[:end_train], Y[:end_train]   
+        X_test, Y_test = X[end_train+1:end_test], Y[end_train+1:end_test]
+        X_dev, Y_dev = X[end_test+1:], Y[end_test+1:]
+        return  X_train, Y_train, X_test, Y_test, X_dev, Y_dev
 
 
-        # TODO : scale data
-        # print(X_train.shape)
-        # # Scale data 
-        # self.mean = np.mean(X_train[:, :, 0])
-        # self.std = np.std(X_train[:, :, 0])
-        # print(self.mean,self.std)
+    def preprocess_data(self):
+        X_train = np.array(pd.concat([self.X_train,self.Y_train],axis=1))
+        X_test = np.array(self.X_test)
+        X_dev = np.array(self.X_dev)
 
-        return train, test, dev
+        # Scale data
+        self.train_mean = np.mean(X_train[:, :, 0])
+        self.train_std = np.std(self.X_train[:, :, 0])
+        print(self.train_mean,self.train_std)
+        pass
 
 #
 # Methods no longer used
@@ -198,20 +214,12 @@ class Preprocess:
         X_test, X_dev, y_test, y_dev=train_test_split(X_test,y_test, test_size=0.3, random_state=42)
         test = pd.concat([X_test,y_test], axis=1)
         dev = pd.concat([X_dev,y_dev], axis=1)
-        print(train.shape)
-        print(test.shape)
-        print(dev.shape) 
+        # print(train.shape)
+        # print(test.shape)
+        # print(dev.shape) 
         return train, test, dev
  
-    def preprocess_data(self):
-        print(self.data.head())
-        # Look for missing values
-        print("Missing values : ", self.data.isnull().sum())
-        # Look for duplicates
-        print("Duplicates : ",self.data.duplicated().sum())
-        # Look for outliers
-        print(self.data.describe())
-        pass
+  
 
 preproc = Preprocess()
 
