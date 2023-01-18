@@ -102,7 +102,7 @@ class Preprocess:
 
                 # Drop the date column
                 df_temps = df_temps.drop(columns=['date'])
-                print(df_temps.head())
+                # print(df_temps.head())
     
 
                 # Sort data by increasing dates
