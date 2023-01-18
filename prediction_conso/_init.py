@@ -1,9 +1,9 @@
 from models._Model import Model
-from models._Model import lstm
+from models.lstm import Lstm
 
 if __name__ == "__main__":
-    model = lstm()
-    model.infos_model()
+    model = Lstm()
+    # model.infos_model()
     model.train()
     
     

@@ -11,7 +11,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
 import datetime
-from codecarbon import EmissionsTracker
+# from codecarbon import EmissionsTracker
 import csv
 import numpy as np
 from dataset import DataLoader as dl
@@ -109,8 +109,8 @@ class Model:
 
         #use dataloader here
 
-        train_data, train_labels = self._data_loader.data_retriever("train")
-        dev_data, dev_labels = self._data_loader.data_retriever("dev")
+        X_train, Y_train = self._data_loader.data_retriever("train")
+        X_dev, Y_dev = self._data_loader.data_retriever("dev")
 
         #tensorboard
         log_dir = "./prediction_conso/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -118,21 +118,25 @@ class Model:
         earlyStoping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=patience)
 
         #tracking emissions
-        tracker = EmissionsTracker()
-        tracker.start()
+        # tracker = EmissionsTracker()
+        # tracker.start()
 
         #model training
-        hist = self._model.fit( 
-            train_data, train_labels, 
-            epochs=epochs,
-            batch_size=batch_size,
-            validation_data=(dev_data, dev_labels), 
-            callbacks=[earlyStoping_callback,tensorboard_callback])
+        print(type(X_train[0][0][0]))
+        cp1 = tf.keras.callbacks.ModelCheckpoint(filepath='./prediction_conso/models/best_model.h5', monitor='val_loss', save_best_only=True)
+        self._model.fit(X_train, Y_train, validation_data=(X_dev, Y_dev), epochs=10, callbacks=[earlyStoping_callback,cp1,tensorboard_callback])
+        # hist = self._model.fit( 
+        #     train_data, train_labels, 
+        #     epochs=epochs,
+        #     batch_size=batch_size,
+        #     validation_data=(dev_data, dev_labels), 
+        #     callbacks=[earlyStoping_callback,tensorboard_callback])
+        self._model.summary()
 
-        self._emission  = tracker.stop()
-        title = f"{self._model_name} - Learning curves"
-        self.plot_learning_curves(hist, title)
-        print(f"Emissions: {self._emission} kgCO2e")
+        # self._emission  = tracker.stop()
+        # title = f"{self._model_name} - Learning curves"
+        # self.plot_learning_curves(hist, title)
+        # print(f"Emissions: {self._emission} kgCO2e")
 
         #see model in tensorboard
         # !tensorboard --logdir ./logs/fit

@@ -25,27 +25,22 @@ class Preprocess:
     Y_test : pd.DataFrame()
     X_dev : pd.DataFrame()
     Y_dev : pd.DataFrame()
-    columns = ['start','d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
-    nb_house = 50
+    columns = ['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
+    nb_house = 2
     mean : list
     std : list
 
     def __init__(self):
         # self.data = self.load_files()
         self.infoclimate = self.load_infoclimate()
-        self.data_time_series = self.load_files_time_series()
+        self.X, self.Y = self.load_files_time_series()
         self.X_train, self.Y_train, self.X_test, self.Y_test, self.X_dev, self.Y_dev= self.split_data_time_series()
-        self.save_data()
+        # self.save_data()
         # self.preprocess_data()
 
-    def save_data(self):
-        train = pd.concat([self.X_train,self.Y_train],axis=1)
-        test = pd.concat([self.X_test,self.Y_test],axis=1)
-        dev = pd.concat([self.X_dev,self.Y_dev],axis=1)
-        train.to_csv(self.PATH_DATA_PROCESSED + "train.csv", index=False)
-        test.to_csv(self.PATH_DATA_PROCESSED + "test.csv", index=False)
-        dev.to_csv(self.PATH_DATA_PROCESSED + "dev.csv", index=False)
-#
+#     def save_data(self):
+#         self.X_train.tofile(self.PATH_DATA_PROCESSED + "X_train.csv", sep=",")
+# #
 # Methods to create time series csv files
 #
     def load_infoclimate(self):
@@ -78,7 +73,10 @@ class Preprocess:
         Y = []
         for folder in os.listdir(self.PATH_DATA)[0:4]:
             print("PREPROCESSING FOLDER :",folder)
-            type_home = folder[5:6]
+            if folder[5:6] == 'M' :
+                type_home = 0
+            else : 
+                type_home = 1
             end = folder[6:]
             [surface, nb_people] = end.split("-")
 
@@ -129,26 +127,43 @@ class Preprocess:
                         list_month = df_temps.loc[d_start:d_end] 
                     else:
                         break
+
+                    row = np.array([ r.astype(np.float64) for r in list_month.to_numpy()])
+                    # row.insert(0,d_start)
+                    X.append(row)
+
                     target = self.get_chunck(df_temps,start+dt.timedelta(length+1),0)
                     target = target.drop(columns=['type','nb_inhabitant','surface','avg_temp','Seconds','Day sin','Day cos','Year sin','Year cos'])
-                    rows = [ row for row in list_month.to_numpy()]
-                    rows.insert(0,d_start)
-                    X.append(rows)
-                    Y.append(target.to_numpy())
-                    
-                    
-        Y = pd.Series(Y).values.reshape(-1,1)
-        X = pd.DataFrame(data=X,columns = self.columns)
-        Y = pd.DataFrame(data=Y,columns=['Y'])
-        out = pd.concat([X,Y],axis=1)
+                    Y.append(np.array(target.to_numpy().astype(np.float64)))
 
+        X = np.array(X)
+        Y = np.array(Y)
+        print(type(Y[0][0][0]))
+        # print(len(X))
+        # print()
+        # print(len(Y))
+        # val = Y
+
+        # while type(val) == list:
+        #     print(len(val), type(val))
+        #     val = val[0]
+        # print(len(val),type(val),val)
+                
+        # print(np.array(X).shape)            
+        # X = pd.DataFrame(data=X,columns = self.columns)
+        # print(X.shape) 
+        # Y = pd.DataFrame(data=Y,columns=['Y'])
+        # print(Y.shape) 
+        # out = pd.concat([X,Y],axis=1)
+        # out = np.concatenate((X,Y),axis=1)
         #Set the start date as index
-        out = out.set_index(['start'])
+        # out = out.set_index(['start'])
         # Sort by increasing dates
-        out = out.sort_index()
-
+        # out = out.sort_index()
+        # out = pd.DataFrame(data = out, columns=self.columns)
         # print(out.shape)
-        return out
+        # print(out.shape)
+        return X,Y
 
     def get_chunck(self,df,start_date,length):
         start =(start_date + dt.timedelta(0)).strftime('%Y-%m-%d')
@@ -158,9 +173,11 @@ class Preprocess:
 
     def split_data_time_series(self):
         # Split data in train, test and dev
-        X = self.data_time_series.drop(columns=['Y'])
-        Y = self.data_time_series['Y']
-        end_train = round(X.shape[0]*0.70)
+        # X = self.data_time_series.drop(columns=['Y'])
+        # Y = self.data_time_series['Y']
+        X = self.X
+        Y = self.Y
+        end_train = round(self.X.shape[0]*0.70)
         end_test = round(X.shape[0]*0.85)
         X_train, Y_train = X[:end_train], Y[:end_train]   
         X_test, Y_test = X[end_train+1:end_test], Y[end_train+1:end_test]
@@ -176,7 +193,7 @@ class Preprocess:
         # Scale data
         self.train_mean = np.mean(X_train[:, :, 0])
         self.train_std = np.std(self.X_train[:, :, 0])
-        print(self.train_mean,self.train_std)
+        # print(self.train_mean,self.train_std)
         pass
 
 #
@@ -221,5 +238,5 @@ class Preprocess:
  
   
 
-preproc = Preprocess()
 
+# praproc = Preprocess()
