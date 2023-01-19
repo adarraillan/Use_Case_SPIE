@@ -28,7 +28,7 @@ class DataLoader :
         self.X_test,self.Y_test = self.data_retriever("test")
         self.X_dev,self.Y_dev = self.data_retriever("dev")
         self.X, self.Y = self.data_retriever("all")
-        self.last_month = self.data_retriever("last_months")
+        self.last_months = self.data_retriever("last_months")
         self.X_means, self.X_stds = self.get_list_mean_std_X_train(self.X_train)
         self.Y_means,self.Y_stds = self.get_list_mean_std_Y_train(self.Y_train)
     
@@ -37,6 +37,7 @@ class DataLoader :
         means = []
         stds = []
         for i in range(X.shape[2]):
+            print(X.shape[2])
             mean = np.mean(X[:, :, i])
             std = np.std(X[:, :, i])
             means.append(mean)
@@ -72,6 +73,11 @@ class DataLoader :
                 Y[:, i] = (Y[:, i]-self.Y_means[i])
         return Y
 
+    def un_standardize_Y(self,Y):
+        for i in range(Y.shape[1]):
+            Y[:, i] = (Y[:, i]*self.Y_stds[i])+self.Y_means[i]
+        return Y
+
     def load_data_from_npy(self,path_X,path_Y):
         X = np.load(path_X) 
         Y = np.load(path_Y)
@@ -93,12 +99,9 @@ class DataLoader :
             path_X = self.DATADIR+'/X.npy'
             path_Y = self.DATADIR+'/Y.npy'
         else :
-            last_months = np.load(self.DATADIR+'/last_months.npy') 
+            last_months = np.load(self.DATADIR+'/last_months.npy',allow_pickle=True) 
             return last_months 
         return self.load_data_from_npy(path_X,path_Y)
 
 # print("Loading data...")
 # data_loader = DataLoader()
-# X_test = data_loader.standardize_X(data_loader.X_test)
-# Y_test = data_loader.standardize_Y(data_loader.Y_test)
-# print(X_test)

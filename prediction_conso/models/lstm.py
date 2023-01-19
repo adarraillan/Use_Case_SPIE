@@ -1,11 +1,10 @@
 import tensorflow as tf
 from tensorflow import keras
-print(keras.__version__)
 from tensorflow.keras import layers, models
 from tensorflow.keras.metrics import RootMeanSquaredError
 from tensorflow.keras.optimizers import Adam
 from models._Model import Model
-
+import os
 
 #lstm model with tensorflow keras
 class Lstm(Model):
@@ -20,13 +19,13 @@ class Lstm(Model):
     
     
     def _build_model(self, load = False):
-        if load:
+        if self.train == False and os.isfile('./saved_models/'+self._model_name+'.h5'):
             return self.load()
         else:
             model = models.Sequential()
-            model.add(layers.InputLayer((30,58)))
+            model.add(layers.InputLayer((30,57)))
             model.add(layers.LSTM(64))
             model.add(layers.Dense(8, 'relu'))
-            model.add(layers.Dense(49, activation='linear'))
+            model.add(layers.Dense(48, activation='linear'))
             model.compile(loss=self._loss, optimizer=self._optimizer, metrics=[self._metrics])
             return model

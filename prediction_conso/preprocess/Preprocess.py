@@ -29,7 +29,7 @@ class Preprocess:
     Y : np.array
     last_months : np.array
     columns = ['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
-    nb_house = 20
+    nb_house = 200
     mean : list
     std : list
 
@@ -82,8 +82,8 @@ class Preprocess:
         df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + house, sep=",",skiprows=1)
         df_temps.rename(columns = {'Unnamed: 0':'date', 'Unnamed: 1':'total'}, inplace = True)
         df_temps['type']=type_home
-        df_temps['nb_inhabitant']=nb_people
-        df_temps['surface']=surface
+        df_temps['nb_inhabitant']= int(nb_people)
+        df_temps['surface']=int(surface)
 
         #Set index of the dataframe
         df_temps['index_date'] = pd.to_datetime(df_temps['date'], format='%m/%d/%Y').dt.strftime('%Y-%m-%d')
@@ -145,28 +145,27 @@ class Preprocess:
                     d_end = (start + dt.timedelta(length)).strftime('%Y-%m-%d')
                     if pd.to_datetime(d_end) < pd.to_datetime(df_temps.index[-1]) :
                         list_month = df_temps.loc[d_start:d_end] 
-                        list_month = list_month.drop(columns=['date'])
+                        list_month = list_month.drop(columns=['date','total'])
                     else:
                         break        
                     row = np.array([ r.astype(np.float64) for r in list_month.to_numpy()])
                     X.append(row)
                     target = self.get_chunck(df_temps,start+dt.timedelta(length+1),0)
-                    target = target.drop(columns=['type','date', 'nb_inhabitant','surface','avg_temp','Seconds','Day sin','Day cos','Year sin','Year cos'])
+                    target = target.drop(columns=['total','type','date', 'nb_inhabitant','surface','avg_temp','Seconds','Day sin','Day cos','Year sin','Year cos'])
                     Y.append(np.array(target.to_numpy().astype(np.float64)))
                 
                 # Get the last month of the data for the current house
                 last_date_of_file = (pd.to_datetime(df_temps.iloc[-1]['date'], format='%m/%d/%Y')).strftime('%Y-%m-%d')
                 start_date_month = (pd.to_datetime(last_date_of_file, format='%Y-%m-%d') - dt.timedelta(29)).strftime('%Y-%m-%d')
                 temp_df_temp = df_temps
-                temp_df_temp = temp_df_temp.drop(columns=['date'])
+                temp_df_temp = temp_df_temp.drop(columns=['date','total'])
                 list_one_month = temp_df_temp.loc[start_date_month:last_date_of_file]
                 row = np.array([ r.astype(np.float64) for r in list_one_month.to_numpy()])
                 last_months.append(list_one_month)
         
         last_months = np.array(last_months)
         X = np.array(X)
-        Y = np.array(Y).reshape(-1,49)
-        print("X shape",X.shape,"Y shape",Y.shape,"last_months shape",last_months.shape)
+        Y = np.array(Y).reshape(-1,48)
         self.X = X
         self.Y = Y
         return X,Y,last_months
@@ -202,48 +201,5 @@ class Preprocess:
         self.train_std = np.std(self.X_train[:, :, 0])
         # print(self.train_mean,self.train_std)
         pass
-
-#
-# Methods no longer used
-#
-
-    def load_files(self):
-        df = pd.DataFrame(columns=self.columns)
-
-        for folder in os.listdir(self.PATH_DATA):
-            # print("FOLDER :",folder)
-            type_home = folder[5:6]
-            end = folder[6:]
-            [surface, nb_people] = end.split("-")
-
-            # Get all the data from the files of the folder in a dataframe
-            df_temps = pd.DataFrame()
-            for file in os.listdir(self.PATH_DATA + folder)[0:self.nb_house]:
-                # print("FILE :",file)
-                df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + file, sep=",",skiprows=1)
-                df_temps.rename(columns = {'Unnamed: 0':'date', 'Unnamed: 1':'total'}, inplace = True)
-                df_temps['type'] = type_home
-                df_temps['nb_inhabitant'] = nb_people
-                df_temps['surface'] = surface
-                df = pd.concat([df,df_temps])
-        df['index_date'] = pd.to_datetime(df['date'], format='%m/%d/%Y')
-        df = df.set_index(['index_date'])
-        return df
-
-    def split_data(self):
-        X = self.data.drop(columns=self.columns)
-        Y = self.data[self.columns]        
-        X_train, X_test, y_train, y_test=train_test_split(X,Y, test_size=0.33, random_state=42)
-        train = pd.concat([X_train,y_train], axis=1)
-        X_test, X_dev, y_test, y_dev=train_test_split(X_test,y_test, test_size=0.3, random_state=42)
-        test = pd.concat([X_test,y_test], axis=1)
-        dev = pd.concat([X_dev,y_dev], axis=1)
-        # print(train.shape)
-        # print(test.shape)
-        # print(dev.shape) 
-        return train, test, dev
- 
-  
-
 
 preproc = Preprocess()

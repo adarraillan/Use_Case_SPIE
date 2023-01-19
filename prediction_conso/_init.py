@@ -5,7 +5,9 @@ import models.Reseau as Res
 
 if __name__ == "__main__":
 
-    reseau = Res.Reseau().prediction_Poste_Source()
+    model = Lstm()
+    model.train()
+    reseau = Res.Reseau(model).prediction_Poste_Source()
     # model = Lstm()
     # # model.infos_model()
     # model.train()

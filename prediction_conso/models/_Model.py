@@ -43,11 +43,12 @@ class Model:
     """
         This function initialize our class
     """
-    def __init__(self,model_name,optimizer="adam",loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),metrics='accuracy'):
+    def __init__(self,model_name,optimizer="adam",loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),metrics='accuracy', train = False):
         self._model_name = model_name
         self._optimizer = optimizer
         self._loss = loss
         self._metrics = metrics
+        
         
 
 #usefull ?
@@ -108,10 +109,10 @@ class Model:
         self.clean_logs()
 
         #use dataloader here
-        X_train = self._data_loader.standardize_X(self._data_loader.X_train)
-        Y_train = self._data_loader.standardize_Y(self._data_loader.Y_train)
-        X_dev = self._data_loader.standardize_X(self._data_loader.X_dev)
-        Y_dev = self._data_loader.standardize_Y(self._data_loader.Y_dev)
+        X_train = self._data_loader.X_train
+        Y_train = self._data_loader.Y_train
+        X_dev = self._data_loader.X_dev
+        Y_dev = self._data_loader.Y_dev
        
         #tensorboard
         log_dir = "./prediction_conso/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -125,8 +126,8 @@ class Model:
         
 
     def plot_predictions_test(self, start=0, end=100):
-        X = self._data_loader.standardize_X(self._data_loader.X_test)
-        Y = self._data_loader.standardize_Y(self._data_loader.Y_test)
+        X = self._data_loader.X_test
+        Y = self._data_loader.Y_test
         model = self._model
         predictions = model.predict(X)
         pred_total_conso = predictions[:, 2]
@@ -139,6 +140,9 @@ class Model:
         plt.show()
         return df[start:end]
 
+    def predict_batch(self, X):
+        predictions = self._model.predict(X)
+        return predictions
 
     """
         This function clean the result folder and create the csv files for the predictions and the evaluation and add the header.
