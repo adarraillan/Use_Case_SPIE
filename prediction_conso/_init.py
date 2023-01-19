@@ -1,20 +1,26 @@
 from models._Model import Model
 from models.lstm import Lstm
-import numpy as np
-import models.Reseau as Res
+from models.Reseau import Reseau
+import os
 
 if __name__ == "__main__":
 
-    model = Lstm()
-    model.train()
-    reseau = Res.Reseau(model).prediction_Poste_Source()
-    # model = Lstm()
-    # # model.infos_model()
-    # model.train()
-    # X_train, Y_train = model._data_loader.data_retriever("train")
-    # # print("X_train shape : ",np.array([X_train[0]]).shape)
-    # # print("Prediction : ",model._model.predict(np.array([X_train[0]])))
-    # # print("Real value : ",Y_train[0])
-    # print(model.plot_predictions_test())
+    # Pour entrainer les modèles
+    # for folder in os.listdir("./dataset/data"):
+    #     model = Model(folder)
+    #     model.train()
+    #     model.save()
+   
 
-    
+    # Pour print les plots 
+
+    # for folder in os.listdir("./dataset/data"):
+    #     model = Model(folder)
+    #     print(model.plot_predictions_test())
+
+    # Pour print la prediction finale au poste source
+    res = Reseau()
+    print("\n\n  ************************* PREDICTION PS *************************\n\n")
+    print(res.PS)
+
+   

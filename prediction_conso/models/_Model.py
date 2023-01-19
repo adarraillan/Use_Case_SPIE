@@ -15,6 +15,10 @@ import datetime
 import csv
 import numpy as np
 from dataset import DataLoader as dl
+from tensorflow.keras import layers, models
+from tensorflow.keras.metrics import RootMeanSquaredError
+from tensorflow.keras.optimizers import Adam
+
 # %matplotlib inline
 
 
@@ -31,33 +35,37 @@ from dataset import DataLoader as dl
 """
 class Model:
     _model = None
-    _model_name : str = "Base Model"
     _optimizer = "adam"
-    _loss = tf.keras.losses.MeanSquaredError
+    _loss = tf.keras.losses.MeanSquaredError()
     _metrics = 'accuracy'
     _emission : float = 0
     _eval_infos = None
-    _data_loader = dl.DataLoader()
-
+    _data_loader : dl.DataLoader
+    data_type : str
 
     """
         This function initialize our class
     """
-    def __init__(self,model_name,optimizer="adam",loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),metrics='accuracy', train = False):
-        self._model_name = model_name
-        self._optimizer = optimizer
-        self._loss = loss
-        self._metrics = metrics
+    def __init__(self,data_type, train = False) -> None:
+        self.data_type = data_type
+        self._data_loader = dl.DataLoader(data_type)
+        self._optimizer = "adam"
+        self._loss = tf.keras.losses.MeanSquaredError()
+        self._metrics = tf.keras.metrics.MeanSquaredError()
+        self._model = self._build_model()
+    
         
-        
-
-#usefull ?
-    # def _build_model(self,load=False):
-    #     print( "Building model parent")
-    #     if load:
-    #         return self.load()
-    #     else:
-    #         raise NotImplementedError
+    def _build_model(self, train = False):
+        model = models.Sequential()
+        model.add(layers.InputLayer((30,55)))
+        model.add(layers.LSTM(64))
+        model.add(layers.Dense(64))
+        model.add(layers.Dropout(0.2))
+        model.add(layers.Dense(49, activation='linear'))
+        model.compile(loss=self._loss, optimizer=self._optimizer, metrics=[self._metrics])
+        if train == False and os.path.exists('saved_models/lstm_'+self.data_type+'.h5'):
+            model.load_weights('saved_models/lstm_'+self.data_type+'.h5')
+        return model
 
     """
         This function clean the logs for tensorboard
@@ -113,6 +121,9 @@ class Model:
         Y_train = self._data_loader.Y_train
         X_dev = self._data_loader.X_dev
         Y_dev = self._data_loader.Y_dev
+        print(X_train)
+        print(X_train.shape)
+        print(Y_train.shape)
        
         #tensorboard
         log_dir = "./prediction_conso/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -129,9 +140,12 @@ class Model:
         X = self._data_loader.X_test
         Y = self._data_loader.Y_test
         model = self._model
+        print("\n\nXXXXXXXXXXXXXXXX :", X)
         predictions = model.predict(X)
-        pred_total_conso = predictions[:, 2]
-        actual_total_conso = Y[:, 2]
+        pred_total_conso = predictions[:,2]
+        print("\n\nPREDICTIONS :", predictions)
+        print(predictions.shape)
+        actual_total_conso = Y[:,2]
         df = pd.DataFrame(data={'Total conso Predictions': pred_total_conso,
                                 'Total conso Actuals':actual_total_conso ,
                                 })
@@ -210,31 +224,20 @@ class Model:
     """
     def save(self, path=None):
         if path is None:
-            path = "./saved_models/{}.h5".format(self._model_name)
+            path = "./saved_models/lstm_"+self.data_type+".h5"
         self._model.save(path)
-        if not os.path.exists("./saved_models/saved_models_results.csv"):
-            with open("./prediction_conso/saved_models/saved_models_results.csv", 'w') as f:
-                writer = csv.writer(f)
-                writer.writerow(["Tous les résultats des modèles"])
-        with open("./prediction_conso/saved_models/saved_models_results.csv", 'a') as f:
-            writer.writerow(["Nom du modèle",self._model_name])
-            writer = csv.writer(f)
-            writer.writerow(["Date", time.time])
-            writer.writerow(["Emissions du training en kgCO2e", self._emission])
-            writer.writerow(["Type de logement", "Accuracy"])
-            for e,v in self._eval_infos:
-                writer.writerow([e, v])
-
-
-    """
-        This function load a model.
-        Function variables:
-            path : str
-    """
-    def load(self, path=None):
-        if path is None:
-            path = "saved_models/{}.h5".format(self._model_name)
-        self._model = tf.keras.models.load_model(path)
+        # if not os.path.exists("./saved_models/saved_models_results.csv"):
+        #     with open("./prediction_conso/saved_models/saved_models_results.csv", 'w') as f:
+        #         writer = csv.writer(f)
+        #         writer.writerow(["Tous les résultats des modèles"])
+        # with open("./prediction_conso/saved_models/saved_models_results.csv", 'a') as f:
+        #     writer.writerow(["Nom du modèle:lstm"])
+        #     writer = csv.writer(f)
+        #     writer.writerow(["Date", time.time])
+        #     writer.writerow(["Emissions du training en kgCO2e", self._emission])
+        #     writer.writerow(["Type de logement", "Accuracy"])
+        #     for e,v in self._eval_infos:
+        #         writer.writerow([e, v])
 
 
     """
@@ -242,7 +245,6 @@ class Model:
     """
     def get_model(self):
         return self._model
-
 
     """
         This function return the model name

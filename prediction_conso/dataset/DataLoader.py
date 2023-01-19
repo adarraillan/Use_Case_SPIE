@@ -22,8 +22,8 @@ class DataLoader :
     X_means : list() = []
     X_stds : list() = []
 
-    def __init__(self):
-        self.DATADIR  = "./dataset/data_preprocessed"
+    def __init__(self,dataset_type):
+        self.DATADIR  = "./dataset/data_preprocessed/"+dataset_type+"/"
         self.X_train,self.Y_train = self.data_retriever("train")
         self.X_test,self.Y_test = self.data_retriever("test")
         self.X_dev,self.Y_dev = self.data_retriever("dev")
@@ -37,7 +37,6 @@ class DataLoader :
         means = []
         stds = []
         for i in range(X.shape[2]):
-            print(X.shape[2])
             mean = np.mean(X[:, :, i])
             std = np.std(X[:, :, i])
             means.append(mean)

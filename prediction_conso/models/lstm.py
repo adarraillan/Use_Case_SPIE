@@ -8,10 +8,10 @@ import os
 
 #lstm model with tensorflow keras
 class Lstm(Model):
-    _model_name = "lstm"
-
+    data_type : str
+    
     def __init__(self) -> None:
-        super().__init__(self._model_name)
+        super().__init__(self.data_type)
         self._optimizer = Adam(learning_rate=0.0001)
         self._loss = tf.keras.losses.MeanSquaredError()
         self._metrics = RootMeanSquaredError()
@@ -19,7 +19,7 @@ class Lstm(Model):
     
     
     def _build_model(self, load = False):
-        if self.train == False and os.isfile('./saved_models/'+self._model_name+'.h5'):
+        if self.train == False and os.isfile('./saved_models/lstm.h5'):
             return self.load()
         else:
             model = models.Sequential()
