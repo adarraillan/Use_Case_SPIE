@@ -19,12 +19,15 @@ class Preprocess:
     # data :pd.DataFrame
     infoclimate : pd.DataFrame
     data_time_series : pd.DataFrame()
-    X_train : pd.DataFrame()
-    Y_train : pd.DataFrame()
-    X_test :  pd.DataFrame()
-    Y_test : pd.DataFrame()
-    X_dev : pd.DataFrame()
-    Y_dev : pd.DataFrame()
+    X_train : np.array
+    Y_train : np.array
+    X_test :  np.array
+    Y_test : np.array
+    X_dev : np.array
+    Y_dev : np.array
+    X : np.array
+    Y : np.array
+    last_months : np.array
     columns = ['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
     nb_house = 20
     mean : list
@@ -33,7 +36,7 @@ class Preprocess:
     def __init__(self):
         # self.data = self.load_files()
         self.infoclimate = self.load_infoclimate()
-        self.X, self.Y = self.load_files_time_series()
+        self.X, self.Y ,self.last_months = self.load_files_time_series()
         self.X_train, self.Y_train, self.X_test, self.Y_test, self.X_dev, self.Y_dev= self.split_data_time_series()
         self.save_data()
         # self.preprocess_data()
@@ -45,7 +48,9 @@ class Preprocess:
         np.save(self.PATH_DATA_PROCESSED+'Y_test.npy', self.Y_test)
         np.save(self.PATH_DATA_PROCESSED+'X_dev.npy', self.X_dev) # save
         np.save(self.PATH_DATA_PROCESSED+'Y_dev.npy', self.Y_dev)
-
+        np.save(self.PATH_DATA_PROCESSED+'X.npy', self.X) # save X
+        np.save(self.PATH_DATA_PROCESSED+'Y.npy', self.Y) # save Y
+        np.save(self.PATH_DATA_PROCESSED+'last_months.npy', self.last_months) # save Y
 # #
 # Methods to create time series csv files
 #
@@ -94,7 +99,7 @@ class Preprocess:
         df_temps['Year cos'] = np.cos(df_temps['Seconds'] * (2 * np.pi / year))
 
         # Drop the date column
-        df_temps = df_temps.drop(columns=['date']) 
+        # df_temps = df_temps.drop(columns=['date']) 
 
         # Sort data by increasing dates
         df_temps = df_temps.sort_index()
@@ -112,6 +117,7 @@ class Preprocess:
         length=29
         X = []
         Y = []
+        last_months = []
         for folder in os.listdir(self.PATH_DATA):
             print("PREPROCESSING FOLDER :",folder)
            
@@ -139,18 +145,31 @@ class Preprocess:
                     d_end = (start + dt.timedelta(length)).strftime('%Y-%m-%d')
                     if pd.to_datetime(d_end) < pd.to_datetime(df_temps.index[-1]) :
                         list_month = df_temps.loc[d_start:d_end] 
+                        list_month = list_month.drop(columns=['date'])
                     else:
                         break        
                     row = np.array([ r.astype(np.float64) for r in list_month.to_numpy()])
                     X.append(row)
                     target = self.get_chunck(df_temps,start+dt.timedelta(length+1),0)
-                    target = target.drop(columns=['type','nb_inhabitant','surface','avg_temp','Seconds','Day sin','Day cos','Year sin','Year cos'])
+                    target = target.drop(columns=['type','date', 'nb_inhabitant','surface','avg_temp','Seconds','Day sin','Day cos','Year sin','Year cos'])
                     Y.append(np.array(target.to_numpy().astype(np.float64)))
-
+                
+                # Get the last month of the data for the current house
+                last_date_of_file = (pd.to_datetime(df_temps.iloc[-1]['date'], format='%m/%d/%Y')).strftime('%Y-%m-%d')
+                start_date_month = (pd.to_datetime(last_date_of_file, format='%Y-%m-%d') - dt.timedelta(29)).strftime('%Y-%m-%d')
+                temp_df_temp = df_temps
+                temp_df_temp = temp_df_temp.drop(columns=['date'])
+                list_one_month = temp_df_temp.loc[start_date_month:last_date_of_file]
+                row = np.array([ r.astype(np.float64) for r in list_one_month.to_numpy()])
+                last_months.append(list_one_month)
+        
+        last_months = np.array(last_months)
         X = np.array(X)
         Y = np.array(Y).reshape(-1,49)
-        print("Y shape",Y.shape)
-        return X,Y
+        print("X shape",X.shape,"Y shape",Y.shape,"last_months shape",last_months.shape)
+        self.X = X
+        self.Y = Y
+        return X,Y,last_months
 
     def get_chunck(self,df,start_date,length):
         start =(start_date + dt.timedelta(0)).strftime('%Y-%m-%d')

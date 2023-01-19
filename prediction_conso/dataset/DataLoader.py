@@ -8,45 +8,74 @@ class DataLoader :
     TRAINDIR : str
     TESTDIR : str
     DEVDIR : str
-    Y_means = []
-    Y_stds = []
-    X_means = []
-    X_stds = []
+    X_train : np.array
+    Y_train : np.array
+    X_test :  np.array
+    Y_test : np.array
+    X_dev : np.array
+    Y_dev : np.array
+    X : np.array
+    Y : np.array
+    last_months : np.array
+    Y_means : list() = []
+    Y_stds : list() = []
+    X_means : list() = []
+    X_stds : list() = []
 
     def __init__(self):
         self.DATADIR  = "./dataset/data_preprocessed"
+        self.X_train,self.Y_train = self.data_retriever("train")
+        self.X_test,self.Y_test = self.data_retriever("test")
+        self.X_dev,self.Y_dev = self.data_retriever("dev")
+        self.X, self.Y = self.data_retriever("all")
+        self.last_month = self.data_retriever("last_months")
+        self.X_means, self.X_stds = self.get_list_mean_std_X_train(self.X_train)
+        self.Y_means,self.Y_stds = self.get_list_mean_std_Y_train(self.Y_train)
     
-    def standardize_X(self,X):
+    # Get the list of means and stds for each feature of X_train
+    def get_list_mean_std_X_train(self,X):
+        means = []
+        stds = []
         for i in range(X.shape[2]):
             mean = np.mean(X[:, :, i])
-            # if i == 0 or i ==1:
-            #     print("mean : ",mean)
             std = np.std(X[:, :, i])
-            if std != 0 :
-                X[:, :, i] = (X[:, :, i]-mean)/std
-            else :
-                X[:, :, i] = (X[:, :, i]-mean)
-            self.X_means.append(mean)
-            self.X_stds.append(std)
-        return X
+            means.append(mean)
+            stds.append(std)
+        return means,stds
 
-    def standardize_Y(self,Y):
+    #Get the list of mean and stds for each feature of Y_train
+    def get_list_mean_std_Y_train(self,Y):
+        means = []
+        stds = []
         for i in range(Y.shape[1]):
             mean = np.mean(Y[:, i])
             std = np.std(Y[:, i])
-            if std != 0 :
-                Y[:, i] = (Y[:, i]-mean)/std
+            means.append(mean)
+            stds.append(std)
+        return means,stds
+
+    # Standardise a X matrix with the means and stds of X_train
+    def standardize_X(self,X):
+        for i in range(X.shape[2]):
+            if self.X_stds[i] != 0 :
+                X[:, :, i] = (X[:, :, i]-self.X_means[i])/self.X_stds[i]
+            else :
+                X[:, :, i] = (X[:, :, i]-self.X_means[i])
+        return X
+
+    # Standardise a Y matrix with the means and stds of Y_train
+    def standardize_Y(self,Y):
+        for i in range(Y.shape[1]):
+            if self.Y_stds[i] != 0 :
+                Y[:, i] = (Y[:, i]-self.Y_means[i])/self.Y_stds[i]
             else : 
-                Y[:, i] = (Y[:, i]-mean)
-            self.Y_means.append(mean)
-            self.Y_stds.append(std)
+                Y[:, i] = (Y[:, i]-self.Y_means[i])
         return Y
 
     def load_data_from_npy(self,path_X,path_Y):
         X = np.load(path_X) 
         Y = np.load(path_Y)
-        print("X shape : ",X.shape)
-        return self.standardize_X(X),self.standardize_Y(Y)
+        return X,Y
 
     def data_retriever(self,dir):
         path_X = ""
@@ -60,11 +89,16 @@ class DataLoader :
         elif dir == "dev" :
             path_X = self.DATADIR+'/X_dev.npy'
             path_Y = self.DATADIR+'/Y_dev.npy'
+        elif dir == "all" :
+            path_X = self.DATADIR+'/X.npy'
+            path_Y = self.DATADIR+'/Y.npy'
         else :
-            print("Error: wrong dir")
-            return 
+            last_months = np.load(self.DATADIR+'/last_months.npy') 
+            return last_months 
         return self.load_data_from_npy(path_X,path_Y)
 
 # print("Loading data...")
 # data_loader = DataLoader()
-# print(data_loader.data_retriever("test"))
+# X_test = data_loader.standardize_X(data_loader.X_test)
+# Y_test = data_loader.standardize_Y(data_loader.Y_test)
+# print(X_test)

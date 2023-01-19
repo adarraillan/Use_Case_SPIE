@@ -27,6 +27,6 @@ class Lstm(Model):
             model.add(layers.InputLayer((30,58)))
             model.add(layers.LSTM(64))
             model.add(layers.Dense(8, 'relu'))
-            model.add(layers.Dense(49, activation='sigmoid'))
+            model.add(layers.Dense(49, activation='linear'))
             model.compile(loss=self._loss, optimizer=self._optimizer, metrics=[self._metrics])
             return model

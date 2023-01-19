@@ -108,9 +108,11 @@ class Model:
         self.clean_logs()
 
         #use dataloader here
-        X_train, Y_train = self._data_loader.data_retriever("train")
-        X_dev, Y_dev = self._data_loader.data_retriever("dev")
-
+        X_train = self._data_loader.standardize_X(self._data_loader.X_train)
+        Y_train = self._data_loader.standardize_Y(self._data_loader.Y_train)
+        X_dev = self._data_loader.standardize_X(self._data_loader.X_dev)
+        Y_dev = self._data_loader.standardize_Y(self._data_loader.Y_dev)
+       
         #tensorboard
         log_dir = "./prediction_conso/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
@@ -121,8 +123,10 @@ class Model:
         self._model.summary()
         self._model.fit(X_train, Y_train, validation_data=(X_dev, Y_dev), batch_size=batch_size, epochs=epochs, callbacks=[earlyStoping_callback,cp1,tensorboard_callback])
         
+
     def plot_predictions_test(self, start=0, end=100):
-        X, Y = self._data_loader.data_retriever("test")
+        X = self._data_loader.standardize_X(self._data_loader.X_test)
+        Y = self._data_loader.standardize_Y(self._data_loader.Y_test)
         model = self._model
         predictions = model.predict(X)
         pred_total_conso = predictions[:, 2]
