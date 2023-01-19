@@ -14,11 +14,12 @@ import random as rd
 
 class Preprocess:
 
-    PATH_DATA = "./dataset/data/"
-    PATH_DATA_PROCESSED = "./dataset/data_preprocessed/"
+    PATH_DATA = "./prediction_conso/dataset/data/"
+    PATH_DATA_PROCESSED = "./prediction_conso/dataset/data_preprocessed/"
     # data :pd.DataFrame
     infoclimate : pd.DataFrame
     data_time_series : pd.DataFrame()
+    data_equipement : pd.DataFrame()
     X_train : pd.DataFrame()
     Y_train : pd.DataFrame()
     X_test :  pd.DataFrame()
@@ -26,13 +27,14 @@ class Preprocess:
     X_dev : pd.DataFrame()
     Y_dev : pd.DataFrame()
     columns = ['d0','d1','d2','d3','d4','d5','d6','d7','d8','d9','d10','d11','d12','d13','d14','d15','d16','d17','d18','d19','d20','d21','d22','d23','d24','d25','d26','d27','d28','d29']
-    nb_house = 20
+    nb_house = 50
     mean : list
     std : list
 
     def __init__(self):
         # self.data = self.load_files()
         self.infoclimate = self.load_infoclimate()
+        self.data_equipement = self.load_data_equipement()
         self.X, self.Y = self.load_files_time_series()
         self.X_train, self.Y_train, self.X_test, self.Y_test, self.X_dev, self.Y_dev= self.split_data_time_series()
         self.save_data()
@@ -50,7 +52,7 @@ class Preprocess:
 # Methods to create time series csv files
 #
     def load_infoclimate(self):
-        df = pd.read_csv("./dataset/infoclimat.csv", sep=",")
+        df = pd.read_csv("./prediction_conso/dataset/infoclimat.csv", sep=",")
         df['date'] = pd.to_datetime(df['dh_utc']).dt.strftime('%Y-%m-%d')
         df.drop(columns=['dh_utc'], inplace=True)
         df['index_date'] = df['date']
@@ -72,6 +74,12 @@ class Preprocess:
         df_date_climate = df_date_climate.set_index(['date'])
         return df_date_climate
 
+
+    def load_data_equipement(self):
+        df = pd.read_csv("./prediction_conso/dataset/data_equipement.csv", header=0, sep=";")
+        df = df.set_index(['Logement'])
+        return df
+
     def preprocess_house_file(self,folder,house,type_home,nb_people,surface):
         # Read file, change column names and add some columns
         df_temps = pd.read_csv(self.PATH_DATA + folder + "/" + house, sep=",",skiprows=1)
@@ -92,6 +100,33 @@ class Preprocess:
         df_temps['Day cos'] = np.cos(df_temps['Seconds'] * (2 * np.pi / day))
         df_temps['Year sin'] = np.sin(df_temps['Seconds'] * (2 * np.pi / year))
         df_temps['Year cos'] = np.cos(df_temps['Seconds'] * (2 * np.pi / year))
+
+        #LV;LL;SL;TV;FG_1;CE_1;CG;FO;PL;FG_2;CE_2
+        try:
+            df_temps["LV"] = self.data_equipement.loc[house[12:-4]]["LV"]
+            df_temps["LL"] = self.data_equipement.loc[house[12:-4]]["LL"]
+            df_temps["SL"] = self.data_equipement.loc[house[12:-4]]["SL"]
+            df_temps["TV"] = self.data_equipement.loc[house[12:-4]]["TV"]
+            df_temps["FG_1"] = self.data_equipement.loc[house[12:-4]]["FG_1"]
+            df_temps["CE_1"] = self.data_equipement.loc[house[12:-4]]["CE_1"]
+            df_temps["CG"] = self.data_equipement.loc[house[12:-4]]["CG"]
+            df_temps["FO"] = self.data_equipement.loc[house[12:-4]]["FO"]
+            df_temps["PL"] = self.data_equipement.loc[house[12:-4]]["PL"]
+            df_temps["FG_2"] = self.data_equipement.loc[house[12:-4]]["FG_2"]
+            df_temps["CE_2"] = self.data_equipement.loc[house[12:-4]]["CE_2"]
+        except:
+            df_temps["LV"] = 0
+            df_temps["LL"] = 0
+            df_temps["SL"] = 0
+            df_temps["TV"] = 0
+            df_temps["FG_1"] = 0
+            df_temps["CE_1"] = 0
+            df_temps["CG"] = 0
+            df_temps["FO"] = 0
+            df_temps["PL"] = 0
+            df_temps["FG_2"] = 0
+            df_temps["CE_2"] = 0
+
 
         # Drop the date column
         df_temps = df_temps.drop(columns=['date']) 
@@ -144,7 +179,7 @@ class Preprocess:
                     row = np.array([ r.astype(np.float64) for r in list_month.to_numpy()])
                     X.append(row)
                     target = self.get_chunck(df_temps,start+dt.timedelta(length+1),0)
-                    target = target.drop(columns=['type','nb_inhabitant','surface','avg_temp','Seconds','Day sin','Day cos','Year sin','Year cos'])
+                    target = target.drop(columns=['type','nb_inhabitant','surface','LV','LL','SL','TV','FG_1','CE_1','CG','FO','PL','FG_2','CE_2','avg_temp','Seconds','Day sin','Day cos','Year sin','Year cos'])
                     Y.append(np.array(target.to_numpy().astype(np.float64)))
 
         X = np.array(X)

@@ -14,7 +14,7 @@ class DataLoader :
     X_stds = []
 
     def __init__(self):
-        self.DATADIR  = "./dataset/data_preprocessed"
+        self.DATADIR  = "./prediction_conso/dataset/data_preprocessed"
     
     def standardize_X(self,X):
         for i in range(X.shape[2]):
@@ -62,7 +62,7 @@ class DataLoader :
             path_Y = self.DATADIR+'/Y_dev.npy'
         else :
             print("Error: wrong dir")
-            return 
+            return None
         return self.load_data_from_npy(path_X,path_Y)
 
 # print("Loading data...")

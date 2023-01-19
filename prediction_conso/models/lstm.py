@@ -11,22 +11,22 @@ from models._Model import Model
 class Lstm(Model):
     _model_name = "lstm"
 
-    def __init__(self) -> None:
+    def __init__(self,load = False) -> None:
         super().__init__(self._model_name)
-        self._optimizer = Adam(learning_rate=0.0001)
+        self._optimizer = "adam"
         self._loss = tf.keras.losses.MeanSquaredError()
         self._metrics = RootMeanSquaredError()
-        self._model = self._build_model()
+        self._model = self._build_model(load)
     
     
     def _build_model(self, load = False):
+        model = models.Sequential()
+        model.add(layers.InputLayer((30,69)))
+        model.add(layers.LSTM(64))
+        model.add(layers.Dropout(0.1))
+        model.add(layers.Dense(64))
+        model.add(layers.Dense(49, activation='linear'))
+        model.compile(loss=self._loss, optimizer=self._optimizer, metrics=[self._metrics])
         if load:
-            return self.load()
-        else:
-            model = models.Sequential()
-            model.add(layers.InputLayer((30,58)))
-            model.add(layers.LSTM(64))
-            model.add(layers.Dense(8, 'relu'))
-            model.add(layers.Dense(49, activation='sigmoid'))
-            model.compile(loss=self._loss, optimizer=self._optimizer, metrics=[self._metrics])
-            return model
+            model=tf.keras.models.load_model("./prediction_conso/saved_models/best_model.h5")
+        return model

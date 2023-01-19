@@ -103,37 +103,43 @@ class Model:
             epochs : int
             batch_size : int
     """
-    def train(self, epochs=10, batch_size=100,patience = 10):
+    def train(self, epochs=100, batch_size=100,patience = 10):
 
         self.clean_logs()
 
         #use dataloader here
+
         X_train, Y_train = self._data_loader.data_retriever("train")
         X_dev, Y_dev = self._data_loader.data_retriever("dev")
+
+        print(X_train)
+        print(Y_train)
 
         #tensorboard
         log_dir = "./prediction_conso/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
         earlyStoping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=patience)
-        cp1 = tf.keras.callbacks.ModelCheckpoint(filepath='./prediction_conso/models/best_model.h5', monitor='val_loss', save_best_only=True)
-  
+
+        #tracking emissions 
+        # tracker = EmissionsTracker()
+        # tracker.start()
+
         #model training
+        cp1 = tf.keras.callbacks.ModelCheckpoint(filepath='./prediction_conso/saved_models/best_model.h5', monitor='val_loss', save_best_only=True)
+        hist = self._model.fit( 
+            X_train, Y_train, 
+            epochs=epochs,
+            validation_data=(X_dev, Y_dev), 
+            callbacks=[earlyStoping_callback,cp1,tensorboard_callback])
         self._model.summary()
-        self._model.fit(X_train, Y_train, validation_data=(X_dev, Y_dev), batch_size=batch_size, epochs=epochs, callbacks=[earlyStoping_callback,cp1,tensorboard_callback])
-        
-    def plot_predictions_test(self, start=0, end=100):
-        X, Y = self._data_loader.data_retriever("test")
-        model = self._model
-        predictions = model.predict(X)
-        pred_total_conso = predictions[:, 2]
-        actual_total_conso = Y[:, 2]
-        df = pd.DataFrame(data={'Total conso Predictions': pred_total_conso,
-                                'Total conso Actuals':actual_total_conso ,
-                                })
-        plt.plot(df['Total conso Predictions'][start:end])
-        plt.plot(df['Total conso Actuals'][start:end])
-        plt.show()
-        return df[start:end]
+
+        # self._emission  = tracker.stop()
+        # title = f"{self._model_name} - Learning curves"
+        # self.plot_learning_curves(hist, title)
+        # print(f"Emissions: {self._emission} kgCO2e")
+
+        #see model in tensorboard
+        # !tensorboard --logdir ./logs/fit
 
 
     """
@@ -159,32 +165,45 @@ class Model:
         Function variables:
             test_dataset_path : str
     """
-    # def evaluate(self, test_dataset_path="./prediction_conso/dataset/data_preprocess/test.csv"):
-    #     self.clean_result()
-    #     df = pd.read_csv(test_dataset_path)
-    #     predictions = []
-    #     #TODO:
-    #     #recuperer test dataset avec dataloader
-    #     #pour chaque élément du dataset faire les 2 lignes suivantes:
-    #     output = self.predict(ligne)
-    #     predictions.append(_id,type_logement,date,hour,output,ground_truth)
-    #     pd.DataFrame(predictions).to_csv('./prediction_conso/results/prediction.csv', index=False)
-    #     self._eval_infos=[]
-    #     for step in predictions:
-    #         if step[1] is not in self._eval_infos :
-    #             self._eval_info[step[1]]=(0,0)
-    #         self._eval_infos[step[1]] += (np.abs(step[4]-step[5]),1)
-    #     for a in range(len(self._eval_infos)):
-    #         self._eval_infos[a][0] = self._eval_infos[a][0]/self._eval_infos[a][1]
-    #     #self._eval_infos type logement accuracy
-    #     with open("./prediction_conso/results/result_evaluations.csv", 'a') as f:
-    #         writer = csv.writer(f)
-    #         writer.writerow(["Date", time.time])
-    #         writer.writerow(["Emissions du training en kCO2e", self._emission])
-    #         writer.writerow(["Type de logement", "Accuracy"])
-    #         for e,v in self._eval_infos:
-    #             writer.writerow([e, v])
+    def evaluate(self):
+        self.clean_result()
+        predictions = []
+        test_dataset,groundtruth = self._data_loader.data_retriever("TEST")
+        output = self.predict(test_dataset)
+        for i in range(len(test_dataset)):
+            predictions.append([test_dataset[i],groundtruth[i],output[i]])
+        self._eval_infos=[]
+        for step in predictions:
+            if step[1] not in self._eval_infos :
+                self._eval_info[step[1]]=(0,0)
+            self._eval_infos[step[1]] += (np.abs(step[4]-step[5]),1)
+        for a in range(len(self._eval_infos)):
+            self._eval_infos[a][0] = self._eval_infos[a][0]/self._eval_infos[a][1]
+        #self._eval_infos type logement accuracy
+        with open("./prediction_conso/results/result_evaluations.csv", 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(["Date", time.time])
+            writer.writerow(["Emissions du training en kCO2e", self._emission])
+            writer.writerow(["Type de logement", "Accuracy"])
+            for e,v in self._eval_infos:
+                writer.writerow([e, v])
                 
+
+    def plot_predictions_test(self, start=0, end=100):
+        X, Y = self._data_loader.data_retriever("test")
+        print(X)
+        model = self._model
+        predictions = model.predict(X)
+        pred_total_conso = predictions[:, 2]
+        actual_total_conso = Y[:, 2]
+        df = pd.DataFrame(data={'Total conso Predictions': pred_total_conso,
+                                'Total conso Actuals':actual_total_conso ,
+                                })
+        plt.plot(df['Total conso Predictions'][start:end])
+        plt.plot(df['Total conso Actuals'][start:end])
+        plt.show()
+        return df[start:end]
+
 
     """
         This function predict the class of an image.
