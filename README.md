@@ -1,8 +1,6 @@
 # README
 
 ##Architecture projet
-<ul>
-    <li>Prediction
         <ul>
             <li>dataset
             <ul>
@@ -23,9 +21,7 @@
             <li>result
                 contient les résultats</li>
             <li>_init.py</li>
+            <li>site/</li>
         </ul>
-    </li>
-</ul>
-
 ##Format données
 type(0 appart, 1 maison), nb_inhabitant, superficy, date, weather(null?) -> vecteur de conso (taille 48)
