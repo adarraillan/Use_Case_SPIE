@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimization</title>
+</head>
+<body>
+
+    <form action="/Send_House" method="POST">
+        <label for="house_name">Référence de votre maison :</label>
+        <input name="house_name" type="text"></input>
+        <input type="submit" value="Valider">
+    </form>
+
+    {% if data %}
+    <br>
+    <form action="/Optimize_Me" method="POST">
+        <div>Entrez vos équipements :</div>
+        <br>
+        <label for="LV">Lave-vaisselle</label>
+        {% if data['LV']=='1' %}
+            <input name="LV" id="LV" type="checkbox" checked/>
+        {% else %}
+            <input name="LV" id="LV" type="checkbox"/>
+        {% endif %}
+        <br>
+        <br>
+
+        <label for=>Lave-linge</label>
+        {% if data['LL']=='1' %}
+            <input name="LL" id="LL" type="checkbox" checked>
+        {% else %}
+            <input name="LL" id="LL" type="checkbox">
+        {% endif %}
+        <br>
+        <br>
+
+        <label for="SL">Sèche-linge</label>
+        {% if data['SL']=='1' %}
+            <input name="SL" id="SL" type="checkbox" checked>
+        {% else %}
+            <input name="SL" id="SL" type="checkbox">
+        {% endif %}
+        <br>
+        <br>
+
+        <label for="FG_1">Réfrigérateur 1</label>
+        {% if data['FG_1']=='1' %}
+            <input name="FG_1" id="FG_1" type="checkbox" checked>
+        {% else %}
+            <input name="FG_1" id="FG_1" type="checkbox">
+        {% endif %}   
+        <br>
+        <br>
+
+        <label for="CE_1">Chauffe-eau 1</label>
+        {% if data['CE_1']=='1' %}
+            <input name="CE_1" id="CE_1" type="checkbox" checked>
+        {% else %}
+            <input name="CE_1" id="CE_1" type="checkbox">
+        {% endif %}
+        <br>
+        <br>
+
+        <label for="FG_2">Réfrigérateur 2</label>
+        {% if data['FG_2']=='1' %}
+            <input name="FG_2" id="FG_2" type="checkbox" checked>
+        {% else %}
+            <input name="FG_2" id="FG_2" type="checkbox">
+        {% endif %}
+        <br>
+        <br>
+
+        <label for="CE_2">Chauffe-eau 2</label>
+        {% if data['CE_2']=='1' %}
+            <input name="CE_2" id="CE_2" type="checkbox" checked>
+        {% else %}
+            <input name="CE_2" id="CE_2" type="checkbox">
+        {% endif %}
+        <br>
+        <br>
+
+        <label for="CG">Congélateur</label>
+        {% if data['CG']=='1' %}
+            <input name="CG" id="CG" type="checkbox" checked>
+        {% else %}
+            <input name="CG" id="CG" type="checkbox">
+        {% endif %}
+        <br>
+        <br>
+
+        <label for="TV">Télévision</label>
+        {% if data['TV']=='1' %}
+            <input name="TV" id="TV" type="checkbox" checked>
+        {% else %}
+            <input name="TV" id="TV" type="checkbox">
+        {% endif %}
+        <!-- <div>Entrez le créneau sur lequel vous pensez utiliser cet appareil :</div>
+        <label for="TV_start">Début</label>
+        <input name="TV_start" id="TV_start" type="time" value="00:00">
+        <label for="TV_end">Fin</label>
+        <input name="TV_end" id="TV_end" type="time" value="00:00"> -->
+        <br>
+        <br>
+
+        <label for="FO">Four</label>
+        {% if data['FO']=='1' %}
+            <input name="FO" id="FO" type="checkbox" checked>
+        {% else %}
+            <input name="FO" id="FO" type="checkbox">
+        {% endif %}
+        <!-- <div>Entrez le créneau sur lequel vous pensez utiliser cet appareil :</div>
+        <label for="FO_start">Début</label>
+        <input name="FO_start" id="FO_start" type="time" value="00:00">
+        <label for="FO_end">Fin</label>
+        <input name="FO_end" id="FO_end" type="time" value="00:00"> -->
+        <br>
+        <br>
+
+        <label for="PL">Plaques de cuisson</label>
+        {% if data['PL']=='1' %}
+            <input id="PL" type="checkbox" checked>
+        {% else %}
+            <input id="PL" type="checkbox">
+        {% endif %}
+        <!-- <div>Entrez le créneau sur lequel vous pensez utiliser cet appareil :</div>
+        <label for="PL_start">Début</label>
+        <input id="PL_start" type="time" value="00:00">
+        <label for="PL_end">Fin</label>
+        <input id="PL_end" type="time" value="00:00"> -->
+        <br>
+        <br>
+
+        <input name="house_name" type="text" value="{{house_name}}" hidden>
+        <input type="submit" value="Optimise Moi">
+    </form>
+
+    {% endif %}
+
+    {% if img_path %}
+        <img src="{{img_path}}" alt="plot_planning">
+    {% endif %}
+    
+</body>
+</html>

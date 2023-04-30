@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% if data %}
+        <br>
+        Consomation maximale au Post Source 
+        <br> - à l'initialiation : {{data[1]}}
+        <br> - après optimisation : {{data[0]}}
+        <br>
+        <br> Taux d'optimisation : {{data[2]}} %
+    {% endif %}
+    {% if time_elapsed %}
+        <br>
+        <br> Optimisation faite en
+        {{time_elapsed}} secondes
+    {% endif %}
+
+    {% if path %}
+        <img src="{{path}}" alt="plot">
+    {% endif %}
+</body>
+</html>
